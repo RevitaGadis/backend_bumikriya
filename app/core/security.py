@@ -8,7 +8,7 @@ from app.core.config import settings
 from app.schemas.token import TokenPayload
 
 pwd_context = CryptContext(
-    schemes=["argon2"],
+    schemes=["pbkdf2_sha256"],
     deprecated="auto"
 )
 

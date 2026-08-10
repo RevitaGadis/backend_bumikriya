@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.v1.endpoints import auth, home, transaction, category, admin, saving, user
+from app.api.v1.endpoints import auth, home, transaction, category, admin, saving, seller, user
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -26,6 +26,7 @@ app.include_router(home.router,        prefix="/api/v1/home",        tags=["Home
 app.include_router(transaction.router, prefix="/api/v1",             tags=["Transactions"])
 app.include_router(category.router,    prefix="/api/v1/categories",  tags=["Categories"])
 app.include_router(saving.router,      prefix="/api/v1/savings",     tags=["Savings"])
+app.include_router(seller.router,      prefix="/api/v1/seller",      tags=["Seller"])
 app.include_router(user.router,        prefix="/api/v1/user",        tags=["User"])
 app.include_router(admin.router,       prefix="/api/v1/admin",       tags=["Admin"])
 

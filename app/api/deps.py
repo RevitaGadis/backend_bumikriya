@@ -55,10 +55,26 @@ def get_current_user(
     return user
 
 def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
-    if not current_user.is_admin:
+    if not current_user.is_admin and (not current_user.role or current_user.role.name != "admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user does not have enough privileges",
+        )
+    return current_user
+
+def get_current_seller(current_user: User = Depends(get_current_user)) -> User:
+    if not current_user.role or current_user.role.name != "seller":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seller access required",
+        )
+    return current_user
+
+def get_current_regular_user(current_user: User = Depends(get_current_user)) -> User:
+    if not current_user.role or current_user.role.name != "user":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User access required",
         )
     return current_user
 

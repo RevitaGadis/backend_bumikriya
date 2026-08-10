@@ -7,6 +7,7 @@ from typing import Optional
 from app.api import deps
 from app.core.security import verify_password, get_password_hash
 from app.models.user import User
+from app.services import dashboard_service
 from app.schemas.user import User as UserSchema
 
 router = APIRouter()
@@ -18,6 +19,13 @@ class ProfileUpdate(BaseModel):
 class PasswordUpdate(BaseModel):
     password_lama: str = Field(..., min_length=1)
     password_baru: str = Field(..., min_length=8)
+
+@router.get("/dashboard")
+def read_user_dashboard(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_regular_user)
+) -> Any:
+    return dashboard_service.get_user_dashboard(db, current_user)
 
 @router.get("/me", response_model=UserSchema)
 def get_profile(
