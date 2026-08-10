@@ -132,7 +132,7 @@ async def refresh_access_token(
             detail="Invalid or expired refresh token",
         )
     
-    user = user_service.get_user_by_id(db, user_id=int(user_id))
+    user = user_service.get_user_by_id(db, user_id=user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

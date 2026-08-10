@@ -38,7 +38,7 @@ def read_transaction_summary(
 
 @router.put("/transactions/{id}", response_model=Transaction)
 def update_transaction(
-    id: int,
+    id: str,
     transaction_in: TransactionCreate,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
@@ -52,7 +52,7 @@ def update_transaction(
 
 @router.delete("/transactions/{id}")
 def delete_transaction(
-    id: int,
+    id: str,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ) -> Any:

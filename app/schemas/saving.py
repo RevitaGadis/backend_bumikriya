@@ -21,8 +21,8 @@ class SavingAddDana(BaseModel):
     jumlah: float = Field(..., gt=0)
 
 class Saving(SavingBase):
-    id:      int
-    user_id: int
+    id:      str
+    user_id: str
 
     class Config:
         from_attributes = True

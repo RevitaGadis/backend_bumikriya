@@ -25,7 +25,7 @@ def read_products(
 
 @router.get("/{product_id}", response_model=Product)
 def read_product(
-    product_id: int,
+    product_id: str,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ) -> Any:
@@ -68,7 +68,7 @@ def create_product(
 
 @router.put("/{product_id}", response_model=Product)
 def update_product(
-    product_id: int,
+    product_id: str,
     *,
     db: Session = Depends(deps.get_db),
     name: Optional[str] = Form(None),
@@ -106,7 +106,7 @@ def update_product(
 
 @router.delete("/{product_id}")
 def delete_product(
-    product_id: int,
+    product_id: str,
     *,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_admin_or_seller)

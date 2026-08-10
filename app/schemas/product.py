@@ -19,7 +19,7 @@ class ProductUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 class ProductInDBBase(ProductBase):
-    id: int
+    id: str
 
     class Config:
         from_attributes = True

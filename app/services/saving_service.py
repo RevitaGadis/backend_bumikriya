@@ -6,7 +6,7 @@ from app.models.saving import Saving
 from app.schemas.saving import SavingCreate, SavingUpdate
 
 
-def create_saving(db: Session, saving: SavingCreate, user_id: int) -> Saving:
+def create_saving(db: Session, saving: SavingCreate, user_id: str) -> Saving:
     db_saving = Saving(
         nama=saving.nama,
         target=saving.target,
@@ -20,7 +20,7 @@ def create_saving(db: Session, saving: SavingCreate, user_id: int) -> Saving:
     return db_saving
 
 
-def get_user_savings(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[Saving]:
+def get_user_savings(db: Session, user_id: str, skip: str = 0, limit: str = 100) -> List[Saving]:
     return (
         db.query(Saving)
         .filter(Saving.user_id == user_id)
@@ -30,7 +30,7 @@ def get_user_savings(db: Session, user_id: int, skip: int = 0, limit: int = 100)
     )
 
 
-def get_user_saving(db: Session, saving_id: int, user_id: int) -> Optional[Saving]:
+def get_user_saving(db: Session, saving_id: str, user_id: str) -> Optional[Saving]:
     return (
         db.query(Saving)
         .filter(Saving.id == saving_id, Saving.user_id == user_id)
@@ -40,9 +40,9 @@ def get_user_saving(db: Session, saving_id: int, user_id: int) -> Optional[Savin
 
 def update_saving(
     db: Session,
-    saving_id: int,
+    saving_id: str,
     saving: SavingUpdate,
-    user_id: int,
+    user_id: str,
 ) -> Optional[Saving]:
     db_saving = get_user_saving(db, saving_id=saving_id, user_id=user_id)
     if not db_saving:
@@ -59,9 +59,9 @@ def update_saving(
 
 def add_saving_funds(
     db: Session,
-    saving_id: int,
+    saving_id: str,
     jumlah: float,
-    user_id: int,
+    user_id: str,
 ) -> Optional[Saving]:
     db_saving = get_user_saving(db, saving_id=saving_id, user_id=user_id)
     if not db_saving:
@@ -73,7 +73,7 @@ def add_saving_funds(
     return db_saving
 
 
-def delete_saving(db: Session, saving_id: int, user_id: int) -> bool:
+def delete_saving(db: Session, saving_id: str, user_id: str) -> bool:
     db_saving = get_user_saving(db, saving_id=saving_id, user_id=user_id)
     if not db_saving:
         return False

@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 from app.models.order import Order
-from app.models.product import Product
 from app.models.role import Role
 from app.models.user import User
 from app.schemas.dashboard import OrderStatus
@@ -130,24 +129,6 @@ def seed_user(
         db.commit()
 
 
-def seed_products(db: Session):
-    if db.query(Product).first():
-        return
-
-    products = [
-        Product(
-            name=f"Produk BumiKriya {idx:03d}",
-            price=50000 + (idx * 1000),
-            image=f"/images/products/produk-bumikriya-{idx:03d}.jpg",
-            stock=10 + idx,
-            is_active=True,
-        )
-        for idx in range(1, 143)
-    ]
-    db.add_all(products)
-    db.commit()
-
-
 def seed_orders(db: Session):
     if db.query(Order).first():
         return
@@ -244,5 +225,4 @@ def seed_db(db: Session):
             ),
         )
 
-    seed_products(db)
     seed_orders(db)

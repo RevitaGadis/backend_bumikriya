@@ -15,8 +15,8 @@ class UserUpdate(UserBase):
     password: Optional[str] = None
 
 class UserInDBBase(UserBase):
-    id: Optional[int] = None
-    role_id: Optional[int] = None
+    id: Optional[str] = None
+    role_id: Optional[str] = None
 
     class Config:
         from_attributes = True

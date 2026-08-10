@@ -41,7 +41,7 @@ def read_savings(
 
 @router.get("/{id}", response_model=Saving)
 def read_saving(
-    id: int,
+    id: str,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
@@ -57,7 +57,7 @@ def read_saving(
 
 @router.put("/{id}", response_model=Saving)
 def update_saving(
-    id: int,
+    id: str,
     saving_in: SavingUpdate,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
@@ -75,7 +75,7 @@ def update_saving(
 
 @router.patch("/{id}/add-dana", response_model=Saving)
 def add_saving_funds(
-    id: int,
+    id: str,
     body: SavingAddDana,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
@@ -93,7 +93,7 @@ def add_saving_funds(
 
 @router.delete("/{id}")
 def delete_saving(
-    id: int,
+    id: str,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:

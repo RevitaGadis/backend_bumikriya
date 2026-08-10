@@ -5,6 +5,6 @@ class Token(BaseModel):
     token_type: str
 
 class TokenPayload(BaseModel):
-    sub: int = None
+    sub: str = None
     exp: int = None
     type: str = None

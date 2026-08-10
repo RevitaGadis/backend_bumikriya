@@ -4,7 +4,7 @@ from app.models.role import Role
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 
-def get_user_by_id(db: Session, user_id: int):
+def get_user_by_id(db: Session, user_id: str):
     return db.query(User).filter(User.id == user_id).first()
 
 def get_user_by_email(db: Session, email: str):

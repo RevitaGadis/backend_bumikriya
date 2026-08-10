@@ -13,7 +13,7 @@ class CategoryUpdate(CategoryBase):
     name: Optional[str] = None
 
 class CategoryInDBBase(CategoryBase):
-    id: int
+    id: str
 
     class Config:
         from_attributes = True

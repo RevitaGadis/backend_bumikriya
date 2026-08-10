@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductUpdate
 
-def get_product(db: Session, product_id: int) -> Optional[Product]:
+def get_product(db: Session, product_id: str) -> Optional[Product]:
     return db.query(Product).filter(Product.id == product_id).first()
 
 def get_product_by_name(db: Session, name: str) -> Optional[Product]:
     return db.query(Product).filter(Product.name == name).first()
 
-def get_products(db: Session, skip: int = 0, limit: int = 100) -> List[Product]:
+def get_products(db: Session, skip: str = 0, limit: str = 100) -> List[Product]:
     return db.query(Product).offset(skip).limit(limit).all()
 
 def create_product(db: Session, product: ProductCreate) -> Product:
@@ -25,7 +25,7 @@ def create_product(db: Session, product: ProductCreate) -> Product:
     db.refresh(db_product)
     return db_product
 
-def update_product(db: Session, product_id: int, product: ProductUpdate) -> Optional[Product]:
+def update_product(db: Session, product_id: str, product: ProductUpdate) -> Optional[Product]:
     db_product = get_product(db, product_id)
     if not db_product:
         return None
@@ -39,7 +39,7 @@ def update_product(db: Session, product_id: int, product: ProductUpdate) -> Opti
     db.refresh(db_product)
     return db_product
 
-def delete_product(db: Session, product_id: int) -> bool:
+def delete_product(db: Session, product_id: str) -> bool:
     db_product = get_product(db, product_id)
     if not db_product:
         return False
