@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.v1.endpoints import auth, home, transaction, category, admin, saving, seller, user
+from app.api.v1.endpoints import auth, home, transaction, category, admin, saving, seller, user, product
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -29,6 +29,7 @@ app.include_router(saving.router,      prefix="/api/v1/savings",     tags=["Savi
 app.include_router(seller.router,      prefix="/api/v1/seller",      tags=["Seller"])
 app.include_router(user.router,        prefix="/api/v1/user",        tags=["User"])
 app.include_router(admin.router,       prefix="/api/v1/admin",       tags=["Admin"])
+app.include_router(product.router,     prefix="/api/v1/products",    tags=["Products"])
 
 @app.get("/")
 async def root():
