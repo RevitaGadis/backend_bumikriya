@@ -1,0 +1,72 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+*.pylintrc
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PKG-INFO
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+
+# Developer stuff
+.vscode/
+.idea/
+*.swp
+*.bak
+*.swo
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+.flaskenv
+
+# My stuff
+instance/
+.webassets-cache
+
+# Logs and other files
+*.log
+*.out
+*.err
+/tmp
+
+# Jupyter Notebook files
+.ipynb_checkpoints
+
+# OS generated files
+.DS_Store
+Thumbs.db
