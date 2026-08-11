@@ -5,6 +5,7 @@ import time
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import inspect, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError
 from sqlalchemy_utils import database_exists, create_database
 from app.db.session import engine, DATABASE_URL, SessionLocal
@@ -29,6 +30,9 @@ def migrate_db():
             connection.execute(text("ALTER TABLE users ADD COLUMN role_id INTEGER NULL"))
 
 def init_db():
+    db_url = make_url(DATABASE_URL)
+    print(f"Connecting to MySQL at {db_url.host}:{db_url.port or 3306} (database: {db_url.database})")
+
     db_ready = False
     for attempt in range(1, 16):
         try:
@@ -38,7 +42,7 @@ def init_db():
             db_ready = True
             break
         except OperationalError as exc:
-            print(f"Database not ready (attempt {attempt}/15): {exc}")
+            print(f"Database not ready (attempt {attempt}/15) at {db_url.host}: {exc}")
             time.sleep(5)
 
     if not db_ready:
