@@ -6,11 +6,11 @@ from pydantic import BaseModel
 from app.schemas.product import Product
 
 
-class WhitelistCreate(BaseModel):
+class WishlistCreate(BaseModel):
     product_id: str
 
 
-class Whitelist(BaseModel):
+class Wishlist(BaseModel):
     id: int
     user_id: str
     product_id: str

@@ -11,8 +11,6 @@ class OrderStatus(str, Enum):
     DIBATALKAN = "DIBATALKAN"
 
 
-<<<<<<< HEAD
-=======
 class PaymentMethod(str, Enum):
     CASH = "CASH"
     TRANSFER = "TRANSFER"
@@ -30,7 +28,6 @@ class PaymentStatus(str, Enum):
     REFUNDED = "REFUNDED"
 
 
->>>>>>> ff30657d9536d2185bba49004f52a59fbc43a492
 class WeeklySalesItem(BaseModel):
     day: str
     total: int
