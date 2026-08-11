@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 from pathlib import Path
+from urllib.parse import quote
+from sqlalchemy.engine import make_url
 import os
 
 _ENV_FILE = Path(__file__).resolve().parent.parent.parent / "env"
@@ -13,11 +15,22 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = os.getenv("PROJECT_NAME", "bumikriya")
     PROJECT_VERSION: str = os.getenv("PROJECT_VERSION", "1.0.0")
 
-    DATABASE_USER: str = os.getenv("DATABASE_USER", "root")
-    DATABASE_PASSWORD: str = os.getenv("DATABASE_PASSWORD", "")
-    DATABASE_HOST: str = os.getenv("DATABASE_HOST", "localhost")
-    DATABASE_PORT: int = int(os.getenv("DATABASE_PORT", 3306))
-    DATABASE_NAME: str = os.getenv("DATABASE_NAME", "bumikriya")
+    DATABASE_USER: str = os.getenv("DATABASE_USER", os.getenv("MYSQLUSER", "root"))
+    DATABASE_PASSWORD: str = os.getenv("DATABASE_PASSWORD", os.getenv("MYSQLPASSWORD", ""))
+    DATABASE_HOST: str = os.getenv("DATABASE_HOST", os.getenv("MYSQLHOST", "localhost"))
+    DATABASE_PORT: int = int(os.getenv("DATABASE_PORT", os.getenv("MYSQLPORT", 3306)))
+    DATABASE_NAME: str = os.getenv("DATABASE_NAME", os.getenv("MYSQLDATABASE", "bumikriya"))
+
+    @property
+    def DATABASE_URL(self) -> str:
+        raw = os.getenv("DATABASE_URL", "").strip() or os.getenv("MYSQL_URL", "").strip()
+        if raw:
+            url = make_url(raw).set(drivername="mysql+pymysql")
+            return url.render_as_string(hide_password=False)
+        return (
+            f"mysql+pymysql://{quote(self.DATABASE_USER)}:{quote(self.DATABASE_PASSWORD)}"
+            f"@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
+        )
 
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", 6379))
