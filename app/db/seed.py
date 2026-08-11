@@ -1,10 +1,6 @@
-from datetime import datetime, timedelta
-
 from sqlalchemy.orm import Session
-from app.models.order import Order
 from app.models.role import Role
 from app.models.user import User
-from app.schemas.dashboard import OrderStatus
 from app.services import user_service, category_service
 from app.schemas.user import UserCreate
 from app.schemas.category import CategoryCreate
@@ -80,28 +76,6 @@ DEFAULT_CATEGORIES = [
     },
 ]
 
-DEFAULT_RECENT_ORDERS = [
-    {
-        "order_number": "ORD-089",
-        "customer": "Budi Santoso",
-        "status": OrderStatus.DIPROSES,
-        "total": 250000,
-    },
-    {
-        "order_number": "ORD-088",
-        "customer": "Siti Aminah",
-        "status": OrderStatus.DIKIRIM,
-        "total": 350000,
-    },
-    {
-        "order_number": "ORD-087",
-        "customer": "Andi Wijaya",
-        "status": OrderStatus.SELESAI,
-        "total": 500000,
-    },
-]
-
-
 def seed_user(
     db: Session,
     name: str,
@@ -127,43 +101,6 @@ def seed_user(
         existing_user.role_id = role.id
         existing_user.is_admin = role_name == "admin"
         db.commit()
-
-
-def seed_orders(db: Session):
-    if db.query(Order).first():
-        return
-
-    now = datetime.now()
-    orders = [
-        Order(
-            order_number=order_data["order_number"],
-            customer=order_data["customer"],
-            status=order_data["status"],
-            total=order_data["total"],
-            created_at=now - timedelta(minutes=idx * 45),
-        )
-        for idx, order_data in enumerate(DEFAULT_RECENT_ORDERS)
-    ]
-
-    remaining_total = 15240000 - sum(order.total for order in orders)
-    remaining_orders = 21
-    base_total = remaining_total // remaining_orders
-    total_remainder = remaining_total % remaining_orders
-
-    for idx in range(remaining_orders):
-        order_number = f"ORD-{86 - idx:03d}"
-        orders.append(
-            Order(
-                order_number=order_number,
-                customer=f"Pelanggan {idx + 1}",
-                status=OrderStatus.SELESAI,
-                total=base_total + (1 if idx < total_remainder else 0),
-                created_at=now - timedelta(minutes=(idx + len(DEFAULT_RECENT_ORDERS)) * 45),
-            )
-        )
-
-    db.add_all(orders)
-    db.commit()
 
 
 def seed_db(db: Session):
@@ -224,5 +161,3 @@ def seed_db(db: Session):
                 is_active=True,
             ),
         )
-
-    seed_orders(db)

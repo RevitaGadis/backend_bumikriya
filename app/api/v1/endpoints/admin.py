@@ -1,12 +1,13 @@
-from typing import Any, List
+from typing import Any, List, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.api import deps
 from app.models.user import User
-from app.services import dashboard_service
+from app.services import dashboard_service, customer_service
 from app.schemas.dashboard import AdminDashboard
 from app.schemas.user import User as UserSchema
+from app.schemas.customer import CustomerListResponse
 from app.schemas.transaction import Transaction as TransactionSchema
 from app.models.transaction import Transaction
 
@@ -18,6 +19,22 @@ def read_admin_dashboard(
     current_admin: User = Depends(deps.get_current_admin)
 ) -> Any:
     return dashboard_service.get_admin_dashboard(db)
+
+@router.get("/customers", response_model=CustomerListResponse)
+def read_customers(
+    db: Session = Depends(deps.get_db),
+    page: int = 1,
+    limit: int = 10,
+    search: Optional[str] = None,
+    current_admin: User = Depends(deps.get_current_admin),
+) -> Any:
+    """
+    Retrieve customers list with statistics, top customer and pagination. (Admin only)
+    """
+    data = customer_service.get_customers(
+        db, page=page, limit=limit, search=search
+    )
+    return {"success": True, "message": "Data pelanggan berhasil diambil", "data": data}
 
 @router.get("/users", response_model=List[UserSchema])
 def read_users(

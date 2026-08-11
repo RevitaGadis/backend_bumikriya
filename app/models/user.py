@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, func
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base, generate_uuid
@@ -11,9 +13,22 @@ class User(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    phone = Column(String(20), nullable=True)
+    member_type = Column(String(50), nullable=True)
     is_admin = Column(Boolean, default=False)
     role_id = Column(String(36), ForeignKey("roles.id"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
     role = relationship("Role", back_populates="users")
     transactions = relationship("Transaction", back_populates="user")
     savings = relationship("Saving", back_populates="user")
+    orders = relationship("Order", back_populates="user")
+    carts = relationship("Cart", back_populates="user")
+    whitelists = relationship("Whitelist", back_populates="user")
+    notifications = relationship("Notification", back_populates="user")

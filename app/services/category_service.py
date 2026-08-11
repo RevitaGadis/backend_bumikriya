@@ -10,7 +10,7 @@ def get_category_by_name(db: Session, name: str) -> Optional[Category]:
     return db.query(Category).filter(Category.name == name).first()
 
 def get_categories(db: Session, skip: str = 0, limit: str = 100) -> List[Category]:
-    return db.query(Category).offset(skip).limit(limit).all()
+    return db.query(Category).order_by(Category.created_at.desc(), Category.id.desc()).offset(skip).limit(limit).all()
 
 def create_category(db: Session, category: CategoryCreate) -> Category:
     db_category = Category(

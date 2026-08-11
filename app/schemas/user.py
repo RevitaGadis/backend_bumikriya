@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
 from app.schemas.role import Role
@@ -17,6 +18,10 @@ class UserUpdate(UserBase):
 class UserInDBBase(UserBase):
     id: Optional[str] = None
     role_id: Optional[str] = None
+    phone: Optional[str] = None
+    member_type: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
