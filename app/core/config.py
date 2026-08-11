@@ -5,14 +5,14 @@ import os
 load_dotenv()
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "finsight-api")
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "bumikriya")
     PROJECT_VERSION: str = os.getenv("PROJECT_VERSION", "1.0.0")
 
-    DATABASE_USER: str = os.getenv("DATABASE_USER", "user")
-    DATABASE_PASSWORD: str = os.getenv("DATABASE_PASSWORD", "password")
+    DATABASE_USER: str = os.getenv("DATABASE_USER", "postgres")
+    DATABASE_PASSWORD: str = os.getenv("DATABASE_PASSWORD", "myproject")
     DATABASE_HOST: str = os.getenv("DATABASE_HOST", "localhost")
-    DATABASE_PORT: int = int(os.getenv("DATABASE_PORT", 3306))
-    DATABASE_NAME: str = os.getenv("DATABASE_NAME", "finsight")
+    DATABASE_PORT: int = int(os.getenv("DATABASE_PORT", 5432))
+    DATABASE_NAME: str = os.getenv("DATABASE_NAME", "bumikriya")
 
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", 6379))
@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
 
     CSRF_SECRET: str = os.getenv("CSRF_SECRET", "your-csrf-secret")
+
+    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
+    MAX_UPLOAD_SIZE: int = int(os.getenv("MAX_UPLOAD_SIZE", 5 * 1024 * 1024))
 
     FIRST_USER_ADMIN_EMAIL: str = os.getenv("FIRST_USER_ADMIN_EMAIL", "admin@finsight.com")
     FIRST_USER_ADMIN_PASSWORD: str = os.getenv("FIRST_USER_ADMIN_PASSWORD", "admin123")

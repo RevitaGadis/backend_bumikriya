@@ -8,7 +8,7 @@ from app.models.transaction import Transaction
 from app.models.category import Category
 from app.schemas.transaction import TransactionCreate, TransactionType
 
-def create_transaction(db: Session, transaction: TransactionCreate, user_id: int):
+def create_transaction(db: Session, transaction: TransactionCreate, user_id: str):
     db_category = db.query(Category).filter(Category.name == transaction.category).first()
     if not db_category:
         raise HTTPException(status_code=400, detail=f"Category '{transaction.category}' does not exist.")
@@ -33,13 +33,13 @@ def create_transaction(db: Session, transaction: TransactionCreate, user_id: int
         db.rollback()
         raise
 
-def get_user_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+def get_user_transactions(db: Session, user_id: str, skip: str = 0, limit: str = 100):
     transactions = db.query(Transaction).filter(Transaction.user_id == user_id).order_by(Transaction.transaction_date.desc()).offset(skip).limit(limit).all()
     for t in transactions:
         setattr(t, 'category', t.category_rel.name)
     return transactions
 
-def update_transaction(db: Session, transaction_id: int, transaction: TransactionCreate, user_id: int):
+def update_transaction(db: Session, transaction_id: str, transaction: TransactionCreate, user_id: str):
     db_transaction = db.query(Transaction).filter(
         Transaction.id == transaction_id,
         Transaction.user_id == user_id
@@ -67,7 +67,7 @@ def update_transaction(db: Session, transaction_id: int, transaction: Transactio
         db.rollback()
         raise
 
-def delete_transaction(db: Session, transaction_id: int, user_id: int):
+def delete_transaction(db: Session, transaction_id: str, user_id: str):
     db_transaction = db.query(Transaction).filter(
         Transaction.id == transaction_id,
         Transaction.user_id == user_id
@@ -78,7 +78,7 @@ def delete_transaction(db: Session, transaction_id: int, user_id: int):
     db.commit()
     return True
 
-def get_transaction_summary(db: Session, user_id: int):
+def get_transaction_summary(db: Session, user_id: str):
     total_income = db.query(func.sum(Transaction.amount)).filter(
         Transaction.user_id == user_id,
         Transaction.transaction_type == TransactionType.income

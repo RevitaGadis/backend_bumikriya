@@ -59,7 +59,16 @@ async def login_for_access_token(
     
     redis_client.setex(f"refresh_token:{user.id}", refresh_token_expires, refresh_token)
     
-    return {"message": "Login successful"}
+    return {
+        "message": "Login successful",
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+        },
+    }
 
 @router.post("/logout")
 async def logout(response: Response, current_user: User = Depends(deps.get_current_user), redis_client: Redis = Depends(deps.get_redis_client)) -> Any:
@@ -123,7 +132,7 @@ async def refresh_access_token(
             detail="Invalid or expired refresh token",
         )
     
-    user = user_service.get_user_by_id(db, user_id=int(user_id))
+    user = user_service.get_user_by_id(db, user_id=user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

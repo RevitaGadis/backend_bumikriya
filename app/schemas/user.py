@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
+from app.schemas.role import Role
 
 class UserBase(BaseModel):
     name: str
@@ -14,13 +15,14 @@ class UserUpdate(UserBase):
     password: Optional[str] = None
 
 class UserInDBBase(UserBase):
-    id: Optional[int] = None
+    id: Optional[str] = None
+    role_id: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 class User(UserInDBBase):
-    pass
+    role: Optional[Role] = None
 
 class UserInDB(UserInDBBase):
     hashed_password: str

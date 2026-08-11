@@ -20,16 +20,14 @@ class TransactionCreate(TransactionBase):
     pass
 
 class TransactionInDBBase(TransactionBase):
-    id: Optional[int] = None
-    user_id: int
-    category_id: int
+    id: Optional[str] = None
+    user_id: str
+    category_id: str
 
     class Config:
         from_attributes = True
 
 class Transaction(TransactionInDBBase):
-    # Overriding category to be a string name in the response if we join it, 
-    # but for now, let's keep it simple.
     pass
 
 class CategorySummary(BaseModel):

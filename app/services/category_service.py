@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 from app.models.category import Category
 from app.schemas.category import CategoryCreate, CategoryUpdate
 
-def get_category(db: Session, category_id: int) -> Optional[Category]:
+def get_category(db: Session, category_id: str) -> Optional[Category]:
     return db.query(Category).filter(Category.id == category_id).first()
 
 def get_category_by_name(db: Session, name: str) -> Optional[Category]:
     return db.query(Category).filter(Category.name == name).first()
 
-def get_categories(db: Session, skip: int = 0, limit: int = 100) -> List[Category]:
+def get_categories(db: Session, skip: str = 0, limit: str = 100) -> List[Category]:
     return db.query(Category).offset(skip).limit(limit).all()
 
 def create_category(db: Session, category: CategoryCreate) -> Category:
@@ -23,7 +23,7 @@ def create_category(db: Session, category: CategoryCreate) -> Category:
     db.refresh(db_category)
     return db_category
 
-def update_category(db: Session, category_id: int, category: CategoryUpdate) -> Optional[Category]:
+def update_category(db: Session, category_id: str, category: CategoryUpdate) -> Optional[Category]:
     db_category = get_category(db, category_id)
     if not db_category:
         return None
@@ -37,7 +37,7 @@ def update_category(db: Session, category_id: int, category: CategoryUpdate) -> 
     db.refresh(db_category)
     return db_category
 
-def delete_category(db: Session, category_id: int) -> bool:
+def delete_category(db: Session, category_id: str) -> bool:
     db_category = get_category(db, category_id)
     if not db_category:
         return False
