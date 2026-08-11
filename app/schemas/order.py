@@ -50,3 +50,77 @@ class Order(BaseModel):
 class OrderUpdate(BaseModel):
     status: Optional[OrderStatus] = None
     shipping_address: Optional[str] = None
+
+
+class OrderStatusInfo(BaseModel):
+    code: str
+    label: str
+
+
+class ShippingAddressInfo(BaseModel):
+    recipient_name: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    province: Optional[str] = None
+    postal_code: Optional[str] = None
+
+
+class CustomerInfo(BaseModel):
+    id: Optional[str] = None
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    type: Optional[str] = None
+    avatar: Optional[str] = None
+    shipping_address: Optional[ShippingAddressInfo] = None
+
+
+class OrderItemDetail(BaseModel):
+    id: int
+    product_id: Optional[str] = None
+    product_name: str
+    sku: Optional[str] = None
+    image: Optional[str] = None
+    price: float
+    quantity: int
+    subtotal: float
+
+
+class PaymentDetail(BaseModel):
+    subtotal: float
+    shipping_cost: float
+    discount: float = 0
+    total: float
+    payment_method: Optional[str] = None
+    payment_status: Optional[str] = None
+    paid_at: Optional[datetime] = None
+
+
+class ShippingDetail(BaseModel):
+    courier: Optional[str] = None
+    tracking_number: Optional[str] = None
+    shipping_status: Optional[str] = None
+
+
+class StatusHistoryItem(BaseModel):
+    status: str
+    label: str
+    created_at: Optional[datetime] = None
+
+
+class OrderDetail(BaseModel):
+    id: int
+    order_number: str
+    status: OrderStatusInfo
+    customer: CustomerInfo
+    items: List[OrderItemDetail] = []
+    payment: PaymentDetail
+    shipping: ShippingDetail
+    status_history: List[StatusHistoryItem] = []
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+
+class OrderDetailResponse(BaseModel):
+    success: bool
+    data: OrderDetail

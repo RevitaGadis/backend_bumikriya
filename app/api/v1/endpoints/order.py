@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api import deps
-from app.schemas.order import Order, OrderUpdate
+from app.schemas.order import Order, OrderDetailResponse, OrderUpdate
 from app.services import order_service
 from app.models.user import User
 
@@ -42,6 +42,25 @@ def read_order(
             detail="Order not found",
         )
     return order
+
+
+@router.get("/{order_id}/detail", response_model=OrderDetailResponse)
+def read_order_detail(
+    order_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_admin_or_seller),
+) -> Any:
+    """
+    Retrieve a full order detail including status, customer, items, payment,
+    shipping and status history. (Admin or seller only)
+    """
+    order_detail = order_service.get_order_detail(db, order_id=order_id)
+    if not order_detail:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found",
+        )
+    return {"success": True, "data": order_detail}
 
 
 @router.put("/{order_id}", response_model=Order)

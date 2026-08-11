@@ -3,11 +3,144 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.models.order import Order
-from app.schemas.order import OrderUpdate
+from app.schemas.order import OrderDetail, OrderUpdate
+from app.schemas.dashboard import OrderStatus, PaymentMethod, PaymentStatus
+
+STATUS_LABELS = {
+    OrderStatus.DIPROSES: ("processing", "Diproses"),
+    OrderStatus.DIKIRIM: ("shipping", "Dikirim"),
+    OrderStatus.SELESAI: ("completed", "Selesai"),
+    OrderStatus.DIBATALKAN: ("cancelled", "Dibatalkan"),
+}
+
+STATUS_HISTORY_LABELS = {
+    OrderStatus.DIPROSES: "Sedang Diproses",
+    OrderStatus.DIKIRIM: "Sedang Dikirim",
+    OrderStatus.SELESAI: "Pesanan Selesai",
+    OrderStatus.DIBATALKAN: "Pesanan Dibatalkan",
+}
+
+SHIPPING_STATUS = {
+    OrderStatus.DIPROSES: "processing",
+    OrderStatus.DIKIRIM: "shipping",
+    OrderStatus.SELESAI: "delivered",
+    OrderStatus.DIBATALKAN: "cancelled",
+}
+
+PAYMENT_STATUS_LABELS = {
+    PaymentStatus.PENDING: "pending",
+    PaymentStatus.PAID: "paid",
+    PaymentStatus.FAILED: "failed",
+    PaymentStatus.REFUNDED: "refunded",
+}
+
+PAYMENT_METHOD_LABELS = {
+    PaymentMethod.CASH: "Cash",
+    PaymentMethod.TRANSFER: "Transfer",
+    PaymentMethod.OVO: "OVO",
+    PaymentMethod.GOPAY: "GoPay",
+    PaymentMethod.DANA: "DANA",
+    PaymentMethod.SHOPEEPAY: "ShopeePay",
+    PaymentMethod.COD: "COD",
+}
 
 
 def get_order(db: Session, order_id: str) -> Optional[Order]:
     return db.query(Order).filter(Order.id == order_id).first()
+
+
+def get_order_detail(db: Session, order_id: str) -> Optional[OrderDetail]:
+    order = get_order(db, order_id)
+    if not order:
+        return None
+
+    code, label = STATUS_LABELS.get(order.status, (order.status.value, order.status.value))
+
+    user = order.user
+    customer = {
+        "id": user.id if user else None,
+        "name": user.name if user else "",
+        "email": user.email if user else None,
+        "phone": None,
+        "type": None,
+        "avatar": None,
+        "shipping_address": {
+            "recipient_name": user.name if user else None,
+            "address": order.shipping_address or None,
+            "city": None,
+            "province": None,
+            "postal_code": None,
+        },
+    }
+
+    items = []
+    for item in order.items:
+        product = item.product
+        items.append(
+            {
+                "id": item.id,
+                "product_id": item.product_id,
+                "product_name": item.product_name,
+                "sku": None,
+                "image": product.image if product else None,
+                "price": float(item.price),
+                "quantity": item.quantity,
+                "subtotal": float(item.subtotal),
+            }
+        )
+
+    payment = order.payment
+    payment_data = {
+        "subtotal": float(order.subtotal),
+        "shipping_cost": float(order.shipping_cost),
+        "discount": 0,
+        "total": float(order.total_amount),
+        "payment_method": PAYMENT_METHOD_LABELS.get(payment.method) if payment else None,
+        "payment_status": PAYMENT_STATUS_LABELS.get(payment.status) if payment else None,
+        "paid_at": payment.paid_at if payment else None,
+    }
+
+    shipping_data = {
+        "courier": None,
+        "tracking_number": None,
+        "shipping_status": SHIPPING_STATUS.get(order.status, "pending"),
+    }
+
+    status_history = [
+        {
+            "status": code,
+            "label": label,
+            "created_at": order.created_at,
+        }
+    ]
+    if payment and payment.paid_at:
+        status_history.append(
+            {
+                "status": "paid",
+                "label": "Pembayaran Diterima",
+                "created_at": payment.paid_at,
+            }
+        )
+    status_history.append(
+        {
+            "status": "created",
+            "label": "Pesanan Dibuat",
+            "created_at": order.created_at,
+        }
+    )
+
+    return OrderDetail(
+        id=order.id,
+        order_number=order.order_number,
+        status={"code": code, "label": label},
+        customer=customer,
+        items=items,
+        payment=payment_data,
+        shipping=shipping_data,
+        status_history=status_history,
+        created_at=order.created_at,
+        updated_at=None,
+    )
 
 
 def get_order_by_number(db: Session, order_number: str) -> Optional[Order]:
