@@ -17,6 +17,11 @@ from app.models.category import Category
 from app.models.saving import Saving
 from app.models.product import Product
 from app.models.order import Order
+from app.models.order_item import OrderItem
+from app.models.payment import Payment
+from app.models.cart import Cart
+from app.models.cart_item import CartItem
+from app.models.whitelist import Whitelist
 from app.db.seed import seed_db
 
 
@@ -27,7 +32,17 @@ def migrate_db():
     if "role_id" not in user_columns:
         print("Migrating users table: adding role_id column")
         with engine.begin() as connection:
-            connection.execute(text("ALTER TABLE users ADD COLUMN role_id INTEGER NULL"))
+            connection.execute(text("ALTER TABLE users ADD COLUMN role_id VARCHAR(36) NULL"))
+
+    table_names = inspector.get_table_names()
+    if "orders" in table_names:
+        order_columns = [column["name"] for column in inspector.get_columns("orders")]
+        if "user_id" not in order_columns:
+            print("Migrating orders table: dropping old schema (orders/order_items/payments)")
+            with engine.begin() as connection:
+                connection.execute(text("DROP TABLE IF EXISTS payments"))
+                connection.execute(text("DROP TABLE IF EXISTS order_items"))
+                connection.execute(text("DROP TABLE IF EXISTS orders"))
 
 def init_db():
     db_url = make_url(DATABASE_URL)
@@ -50,6 +65,7 @@ def init_db():
 
     Base.metadata.create_all(bind=engine)
     migrate_db()
+    Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
     try:

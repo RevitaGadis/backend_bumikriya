@@ -11,6 +11,23 @@ class OrderStatus(str, Enum):
     DIBATALKAN = "DIBATALKAN"
 
 
+class PaymentMethod(str, Enum):
+    CASH = "CASH"
+    TRANSFER = "TRANSFER"
+    OVO = "OVO"
+    GOPAY = "GOPAY"
+    DANA = "DANA"
+    SHOPEEPAY = "SHOPEEPAY"
+    COD = "COD"
+
+
+class PaymentStatus(str, Enum):
+    PENDING = "PENDING"
+    PAID = "PAID"
+    FAILED = "FAILED"
+    REFUNDED = "REFUNDED"
+
+
 class WeeklySalesItem(BaseModel):
     day: str
     total: int

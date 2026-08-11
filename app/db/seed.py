@@ -2,9 +2,12 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 from app.models.order import Order
+from app.models.order_item import OrderItem
+from app.models.payment import Payment
+from app.models.product import Product
 from app.models.role import Role
 from app.models.user import User
-from app.schemas.dashboard import OrderStatus
+from app.schemas.dashboard import OrderStatus, PaymentMethod, PaymentStatus
 from app.services import user_service, category_service
 from app.schemas.user import UserCreate
 from app.schemas.category import CategoryCreate
@@ -83,21 +86,18 @@ DEFAULT_CATEGORIES = [
 DEFAULT_RECENT_ORDERS = [
     {
         "order_number": "ORD-089",
-        "customer": "Budi Santoso",
         "status": OrderStatus.DIPROSES,
-        "total": 250000,
+        "subtotal": 235000,
     },
     {
         "order_number": "ORD-088",
-        "customer": "Siti Aminah",
         "status": OrderStatus.DIKIRIM,
-        "total": 350000,
+        "subtotal": 335000,
     },
     {
         "order_number": "ORD-087",
-        "customer": "Andi Wijaya",
         "status": OrderStatus.SELESAI,
-        "total": 500000,
+        "subtotal": 485000,
     },
 ]
 
@@ -133,36 +133,115 @@ def seed_orders(db: Session):
     if db.query(Order).first():
         return
 
-    now = datetime.now()
-    orders = [
-        Order(
-            order_number=order_data["order_number"],
-            customer=order_data["customer"],
-            status=order_data["status"],
-            total=order_data["total"],
-            created_at=now - timedelta(minutes=idx * 45),
-        )
-        for idx, order_data in enumerate(DEFAULT_RECENT_ORDERS)
-    ]
+    buyer_users = db.query(User).filter(User.is_admin.is_(False)).all()
+    if not buyer_users:
+        buyer_users = db.query(User).all()
+    if not buyer_users:
+        return
 
-    remaining_total = 15240000 - sum(order.total for order in orders)
+    products = db.query(Product).all()
+    if not products:
+        products = [
+            Product(
+                name="Benang Rajut Premium",
+                price=25000,
+                image="/images/products/default.jpg",
+                stock=100,
+                is_active=True,
+            ),
+            Product(
+                name="Kain Katun Lembut",
+                price=45000,
+                image="/images/products/default.jpg",
+                stock=50,
+                is_active=True,
+            ),
+            Product(
+                name="Pola Rajut Eksklusif",
+                price=15000,
+                image="/images/products/default.jpg",
+                stock=80,
+                is_active=True,
+            ),
+        ]
+        db.add_all(products)
+        db.commit()
+        for product in products:
+            db.refresh(product)
+
+    now = datetime.now()
+    shipping_cost = 15000
+
+    def build_order(order_number, user, status, subtotal, created_at):
+        order = Order(
+            user_id=user.id,
+            order_number=order_number,
+            subtotal=subtotal,
+            shipping_cost=shipping_cost,
+            total_amount=subtotal + shipping_cost,
+            status=status,
+            shipping_address="Jl. Merdeka No. 10, Jakarta",
+            created_at=created_at,
+        )
+        db.add(order)
+        db.flush()
+
+        product = products[abs(hash(order_number)) % len(products)]
+        quantity = max(1, int(subtotal // product.price))
+        db.add(
+            OrderItem(
+                order_id=order.id,
+                product_id=product.id,
+                product_name=product.name,
+                price=product.price,
+                quantity=quantity,
+                subtotal=product.price * quantity,
+            )
+        )
+        paid = status in (OrderStatus.DIKIRIM, OrderStatus.SELESAI)
+        db.add(
+            Payment(
+                order_id=order.id,
+                method=PaymentMethod.CASH if status == OrderStatus.SELESAI else PaymentMethod.TRANSFER,
+                amount=order.total_amount,
+                status=PaymentStatus.PAID if paid else PaymentStatus.PENDING,
+                transaction_id=f"TXN-{order_number}",
+                paid_at=created_at + timedelta(minutes=5) if paid else None,
+            )
+        )
+        return order
+
+    orders = []
+    for idx, order_data in enumerate(DEFAULT_RECENT_ORDERS):
+        user = buyer_users[idx % len(buyer_users)]
+        orders.append(
+            build_order(
+                order_data["order_number"],
+                user,
+                order_data["status"],
+                order_data["subtotal"],
+                now - timedelta(minutes=idx * 45),
+            )
+        )
+
+    remaining_total = 15240000 - sum(order.total_amount for order in orders)
     remaining_orders = 21
     base_total = remaining_total // remaining_orders
     total_remainder = remaining_total % remaining_orders
 
     for idx in range(remaining_orders):
         order_number = f"ORD-{86 - idx:03d}"
+        user = buyer_users[(idx + len(DEFAULT_RECENT_ORDERS)) % len(buyer_users)]
         orders.append(
-            Order(
-                order_number=order_number,
-                customer=f"Pelanggan {idx + 1}",
-                status=OrderStatus.SELESAI,
-                total=base_total + (1 if idx < total_remainder else 0),
-                created_at=now - timedelta(minutes=(idx + len(DEFAULT_RECENT_ORDERS)) * 45),
+            build_order(
+                order_number,
+                user,
+                OrderStatus.SELESAI,
+                base_total + (1 if idx < total_remainder else 0),
+                now - timedelta(minutes=(idx + len(DEFAULT_RECENT_ORDERS)) * 45),
             )
         )
 
-    db.add_all(orders)
     db.commit()
 
 

@@ -17,3 +17,6 @@ class User(Base):
     role = relationship("Role", back_populates="users")
     transactions = relationship("Transaction", back_populates="user")
     savings = relationship("Saving", back_populates="user")
+    orders = relationship("Order", back_populates="user")
+    carts = relationship("Cart", back_populates="user")
+    whitelists = relationship("Whitelist", back_populates="user")
