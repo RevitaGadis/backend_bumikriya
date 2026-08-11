@@ -36,7 +36,11 @@ def get_admin_dashboard(db: Session):
 
     weekly_totals = {week_start.date() + timedelta(days=idx): 0 for idx in range(7)}
     for order in weekly_orders:
+<<<<<<< HEAD
         weekly_totals[order.created_at.date()] += int(order.total)
+=======
+        weekly_totals[order.created_at.date()] += int(order.total_amount or 0)
+>>>>>>> ff30657d9536d2185bba49004f52a59fbc43a492
 
     day_names = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
     recent_orders = db.query(Order).order_by(Order.created_at.desc(), Order.id.desc()).limit(5).all()
@@ -55,9 +59,15 @@ def get_admin_dashboard(db: Session):
         "recent_orders": [
             {
                 "order_number": order.order_number,
+<<<<<<< HEAD
                 "customer": order.customer,
                 "status": order.status.value,
                 "total": int(order.total),
+=======
+                "customer": order.user.name if order.user else "Customer",
+                "status": order.status.value,
+                "total": int(order.total_amount or 0),
+>>>>>>> ff30657d9536d2185bba49004f52a59fbc43a492
             }
             for order in recent_orders
         ],
