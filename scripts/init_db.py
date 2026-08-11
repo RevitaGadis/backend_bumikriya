@@ -46,7 +46,7 @@ def migrate_db():
 
 def init_db():
     db_url = make_url(DATABASE_URL)
-    print(f"Connecting to MySQL at {db_url.host}:{db_url.port or 3306} (database: {db_url.database})")
+    print(f"Connecting to PostgreSQL at {db_url.host}:{db_url.port or 5432} (database: {db_url.database})")
 
     db_ready = False
     for attempt in range(1, 16):

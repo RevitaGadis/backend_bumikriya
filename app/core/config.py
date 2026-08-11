@@ -15,20 +15,20 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = os.getenv("PROJECT_NAME", "bumikriya")
     PROJECT_VERSION: str = os.getenv("PROJECT_VERSION", "1.0.0")
 
-    DATABASE_USER: str = os.getenv("DATABASE_USER", os.getenv("MYSQLUSER", "root"))
-    DATABASE_PASSWORD: str = os.getenv("DATABASE_PASSWORD", os.getenv("MYSQLPASSWORD", ""))
-    DATABASE_HOST: str = os.getenv("DATABASE_HOST", os.getenv("MYSQLHOST", "localhost"))
-    DATABASE_PORT: int = int(os.getenv("DATABASE_PORT", os.getenv("MYSQLPORT", 3306)))
-    DATABASE_NAME: str = os.getenv("DATABASE_NAME", os.getenv("MYSQLDATABASE", "bumikriya"))
+    DATABASE_USER: str = os.getenv("DATABASE_USER", os.getenv("PGUSER", os.getenv("POSTGRES_USER", "postgres")))
+    DATABASE_PASSWORD: str = os.getenv("DATABASE_PASSWORD", os.getenv("PGPASSWORD", os.getenv("POSTGRES_PASSWORD", "AzkaSaadi07")))
+    DATABASE_HOST: str = os.getenv("DATABASE_HOST", os.getenv("PGHOST", os.getenv("POSTGRES_HOST", "localhost")))
+    DATABASE_PORT: int = int(os.getenv("DATABASE_PORT", os.getenv("PGPORT", os.getenv("POSTGRES_PORT", 5432))))
+    DATABASE_NAME: str = os.getenv("DATABASE_NAME", os.getenv("PGDATABASE", os.getenv("POSTGRES_DB", "bumikriya")))
 
     @property
     def DATABASE_URL(self) -> str:
-        raw = os.getenv("DATABASE_URL", "").strip() or os.getenv("MYSQL_URL", "").strip()
+        raw = os.getenv("DATABASE_URL", "").strip() or os.getenv("PGURL", "").strip()
         if raw:
-            url = make_url(raw).set(drivername="mysql+pymysql")
+            url = make_url(raw).set(drivername="postgresql+psycopg2")
             return url.render_as_string(hide_password=False)
         return (
-            f"mysql+pymysql://{quote(self.DATABASE_USER)}:{quote(self.DATABASE_PASSWORD)}"
+            f"postgresql+psycopg2://{quote(self.DATABASE_USER)}:{quote(self.DATABASE_PASSWORD)}"
             f"@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
         )
 
