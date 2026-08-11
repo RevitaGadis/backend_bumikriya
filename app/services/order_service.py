@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.order import Order
 from app.schemas.order import OrderDetail, OrderUpdate
 from app.schemas.dashboard import OrderStatus, PaymentMethod, PaymentStatus
+from app.services import notification_service
 
 STATUS_LABELS = {
     OrderStatus.DIPROSES: ("processing", "Diproses"),
@@ -61,8 +62,8 @@ def get_order_detail(db: Session, order_id: str) -> Optional[OrderDetail]:
         "id": user.id if user else None,
         "name": user.name if user else "",
         "email": user.email if user else None,
-        "phone": None,
-        "type": None,
+        "phone": user.phone if user else None,
+        "type": user.member_type if user else None,
         "avatar": None,
         "shipping_address": {
             "recipient_name": user.name if user else None,
@@ -165,10 +166,25 @@ def update_order(db: Session, order_id: str, order: OrderUpdate) -> Optional[Ord
         return None
 
     update_data = order.model_dump(exclude_unset=True)
+    status_changed = order.status is not None and order.status != db_order.status
     for key, value in update_data.items():
         setattr(db_order, key, value)
 
     db.add(db_order)
     db.commit()
     db.refresh(db_order)
+
+    if status_changed and db_order.user_id:
+        label = STATUS_HISTORY_LABELS.get(
+            db_order.status, db_order.status.value if db_order.status else ""
+        )
+        notification_service.create_notification(
+            db=db,
+            user_id=db_order.user_id,
+            title="Update Status Pesanan",
+            message=f"Pesanan {db_order.order_number} berstatus {label}",
+            notification_type="order",
+            reference_type="order",
+            reference_id=db_order.id,
+        )
     return db_order

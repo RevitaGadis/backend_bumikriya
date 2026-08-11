@@ -45,28 +45,32 @@ def _set_auth_cookies(response: Response, user: User, redis_client: Redis) -> No
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=True,
-        samesite="none",
-        max_age=access_token_expires.seconds,
-        expires=access_token_expires.seconds,
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
+        max_age=access_token_expires.total_seconds(),
+        expires=access_token_expires.total_seconds(),
     )
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
-        samesite="none",
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
         max_age=refresh_token_expires.total_seconds(),
         expires=refresh_token_expires.total_seconds(),
     )
 
     redis_client.setex(f"refresh_token:{user.id}", refresh_token_expires, refresh_token)
 
+    return access_token, refresh_token
+
 def _login_response(response: Response, user: User, redis_client: Redis) -> dict[str, Any]:
-    _set_auth_cookies(response, user, redis_client)
+    access_token, refresh_token = _set_auth_cookies(response, user, redis_client)
     return {
         "message": "Login successful",
         "token_type": "bearer",
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "user": {
             "id": user.id,
             "email": user.email,
@@ -213,15 +217,24 @@ async def refresh_access_token(
         key="access_token",
         value=new_access_token,
         httponly=True,
-        max_age=access_token_expires.seconds,
-        expires=access_token_expires.seconds,
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
+        max_age=access_token_expires.total_seconds(),
+        expires=access_token_expires.total_seconds(),
     )
     response.set_cookie(
         key="refresh_token",
         value=new_refresh_token,
         httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
         max_age=refresh_token_expires.total_seconds(),
         expires=refresh_token_expires.total_seconds(),
     )
 
-    return {"message": "Token refreshed successfully"}
+    return {
+        "message": "Token refreshed successfully",
+        "token_type": "bearer",
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+    }

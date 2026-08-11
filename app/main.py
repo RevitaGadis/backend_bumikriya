@@ -6,7 +6,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.api.v1.endpoints import auth, home, transaction, category, admin, saving, seller, user, product, order, whitelist, cart
+from app.api.v1.endpoints import auth, home, transaction, category, admin, saving, seller, user, product, order, whitelist, cart, notification
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -47,6 +47,7 @@ app.include_router(product.router,     prefix="/api/v1/products",    tags=["Prod
 app.include_router(order.router,       prefix="/api/v1/orders",      tags=["Orders"])
 app.include_router(whitelist.router,   prefix="/api/v1/whitelists",  tags=["Whitelist"])
 app.include_router(cart.router,        prefix="/api/v1/cart",        tags=["Cart"])
+app.include_router(notification.router, prefix="/api/v1/notifications", tags=["Notifications"])
 
 @app.get("/")
 async def root():

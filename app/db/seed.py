@@ -1,13 +1,6 @@
-from datetime import datetime, timedelta
-
 from sqlalchemy.orm import Session
-from app.models.order import Order
-from app.models.order_item import OrderItem
-from app.models.payment import Payment
-from app.models.product import Product
 from app.models.role import Role
 from app.models.user import User
-from app.schemas.dashboard import OrderStatus, PaymentMethod, PaymentStatus
 from app.services import user_service, category_service
 from app.schemas.user import UserCreate
 from app.schemas.category import CategoryCreate
@@ -83,25 +76,6 @@ DEFAULT_CATEGORIES = [
     },
 ]
 
-DEFAULT_RECENT_ORDERS = [
-    {
-        "order_number": "ORD-089",
-        "status": OrderStatus.DIPROSES,
-        "subtotal": 235000,
-    },
-    {
-        "order_number": "ORD-088",
-        "status": OrderStatus.DIKIRIM,
-        "subtotal": 335000,
-    },
-    {
-        "order_number": "ORD-087",
-        "status": OrderStatus.SELESAI,
-        "subtotal": 485000,
-    },
-]
-
-
 def seed_user(
     db: Session,
     name: str,
@@ -127,122 +101,6 @@ def seed_user(
         existing_user.role_id = role.id
         existing_user.is_admin = role_name == "admin"
         db.commit()
-
-
-def seed_orders(db: Session):
-    if db.query(Order).first():
-        return
-
-    buyer_users = db.query(User).filter(User.is_admin.is_(False)).all()
-    if not buyer_users:
-        buyer_users = db.query(User).all()
-    if not buyer_users:
-        return
-
-    products = db.query(Product).all()
-    if not products:
-        products = [
-            Product(
-                name="Benang Rajut Premium",
-                price=25000,
-                image="/images/products/default.jpg",
-                stock=100,
-                is_active=True,
-            ),
-            Product(
-                name="Kain Katun Lembut",
-                price=45000,
-                image="/images/products/default.jpg",
-                stock=50,
-                is_active=True,
-            ),
-            Product(
-                name="Pola Rajut Eksklusif",
-                price=15000,
-                image="/images/products/default.jpg",
-                stock=80,
-                is_active=True,
-            ),
-        ]
-        db.add_all(products)
-        db.commit()
-        for product in products:
-            db.refresh(product)
-
-    now = datetime.now()
-    shipping_cost = 15000
-
-    def build_order(order_number, user, status, subtotal, created_at):
-        order = Order(
-            user_id=user.id,
-            order_number=order_number,
-            subtotal=subtotal,
-            shipping_cost=shipping_cost,
-            total_amount=subtotal + shipping_cost,
-            status=status,
-            shipping_address="Jl. Merdeka No. 10, Jakarta",
-            created_at=created_at,
-        )
-        db.add(order)
-        db.flush()
-
-        product = products[abs(hash(order_number)) % len(products)]
-        quantity = max(1, int(subtotal // product.price))
-        db.add(
-            OrderItem(
-                order_id=order.id,
-                product_id=product.id,
-                product_name=product.name,
-                price=product.price,
-                quantity=quantity,
-                subtotal=product.price * quantity,
-            )
-        )
-        paid = status in (OrderStatus.DIKIRIM, OrderStatus.SELESAI)
-        db.add(
-            Payment(
-                order_id=order.id,
-                method=PaymentMethod.CASH if status == OrderStatus.SELESAI else PaymentMethod.TRANSFER,
-                amount=order.total_amount,
-                status=PaymentStatus.PAID if paid else PaymentStatus.PENDING,
-                transaction_id=f"TXN-{order_number}",
-                paid_at=created_at + timedelta(minutes=5) if paid else None,
-            )
-        )
-        return order
-
-    orders = []
-    for idx, order_data in enumerate(DEFAULT_RECENT_ORDERS):
-        user = buyer_users[idx % len(buyer_users)]
-        orders.append(
-            build_order(
-                order_data["order_number"],
-                user,
-                order_data["status"],
-                order_data["subtotal"],
-                now - timedelta(minutes=idx * 45),
-            )
-        )
-
-    remaining_total = 15240000 - sum(order.total_amount for order in orders)
-    remaining_orders = 21
-    base_total = remaining_total // remaining_orders
-    total_remainder = remaining_total % remaining_orders
-
-    for idx in range(remaining_orders):
-        order_number = f"ORD-{86 - idx:03d}"
-        user = buyer_users[(idx + len(DEFAULT_RECENT_ORDERS)) % len(buyer_users)]
-        orders.append(
-            build_order(
-                order_number,
-                user,
-                OrderStatus.SELESAI,
-                base_total + (1 if idx < total_remainder else 0),
-                now - timedelta(minutes=(idx + len(DEFAULT_RECENT_ORDERS)) * 45),
-            )
-        )
-
-    db.commit()
 
 
 def seed_db(db: Session):
@@ -303,5 +161,3 @@ def seed_db(db: Session):
                 is_active=True,
             ),
         )
-
-    seed_orders(db)

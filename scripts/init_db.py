@@ -22,6 +22,7 @@ from app.models.payment import Payment
 from app.models.cart import Cart
 from app.models.cart_item import CartItem
 from app.models.whitelist import Whitelist
+from app.models.notification import Notification
 from app.db.seed import seed_db
 
 
@@ -33,6 +34,33 @@ def migrate_db():
         print("Migrating users table: adding role_id column")
         with engine.begin() as connection:
             connection.execute(text("ALTER TABLE users ADD COLUMN role_id VARCHAR(36) NULL"))
+
+    if "phone" not in user_columns:
+        print("Migrating users table: adding phone column")
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(20) NULL"))
+
+    if "member_type" not in user_columns:
+        print("Migrating users table: adding member_type column")
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE users ADD COLUMN member_type VARCHAR(50) NULL"))
+
+    if "created_at" not in user_columns:
+        print("Migrating users table: adding created_at column")
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE users ADD COLUMN created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()"))
+
+    if "updated_at" not in user_columns:
+        print("Migrating users table: adding updated_at column")
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE users ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()"))
+
+    if "categories" in inspector.get_table_names():
+        category_columns = [column["name"] for column in inspector.get_columns("categories")]
+        if "created_at" not in category_columns:
+            print("Migrating categories table: adding created_at column")
+            with engine.begin() as connection:
+                connection.execute(text("ALTER TABLE categories ADD COLUMN created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()"))
 
     table_names = inspector.get_table_names()
     if "orders" in table_names:

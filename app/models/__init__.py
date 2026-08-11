@@ -1,6 +1,7 @@
 from app.models.cart import Cart
 from app.models.cart_item import CartItem
 from app.models.category import Category
+from app.models.notification import Notification
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.payment import Payment
@@ -15,6 +16,7 @@ __all__ = [
     "Cart",
     "CartItem",
     "Category",
+    "Notification",
     "Order",
     "OrderItem",
     "Payment",

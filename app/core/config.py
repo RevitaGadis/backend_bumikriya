@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
 
+    COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "False").lower() in ("1", "true", "yes", "on")
+    COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")
+
     CSRF_SECRET: str = os.getenv("CSRF_SECRET", "your-csrf-secret")
 
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
