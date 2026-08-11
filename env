@@ -23,3 +23,8 @@ CSRF_SECRET=3xV9kLpQ2mZ8aR1tY7uB6cN5dH4jK0sXwPqF
 # Akun admin pertama
 FIRST_USER_ADMIN_EMAIL=admin@bumikriya.com
 FIRST_USER_ADMIN_PASSWORD=admin123
+
+GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxxx
+GOOGLE_REDIRECT_URI=https://<host-backend>/api/v1/auth/google/callback
+FRONTEND_URL=http://localhost:5173
