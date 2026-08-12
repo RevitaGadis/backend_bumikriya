@@ -14,7 +14,6 @@ from app.models.role import Role
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.models.category import Category
-from app.models.saving import Saving
 from app.models.product import Product
 from app.models.order import Order
 from app.models.order_item import OrderItem
@@ -49,6 +48,16 @@ def migrate_db():
         print("Migrating users table: adding member_type column")
         with engine.begin() as connection:
             connection.execute(text("ALTER TABLE users ADD COLUMN member_type VARCHAR(50) NULL"))
+
+    if "store_name" not in user_columns:
+        print("Migrating users table: adding store_name column")
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE users ADD COLUMN store_name VARCHAR(255) NULL"))
+
+    if "store_slug" not in user_columns:
+        print("Migrating users table: adding store_slug column")
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE users ADD COLUMN store_slug VARCHAR(255) NULL"))
 
     if "status" not in user_columns:
         print("Migrating users table: adding status column")

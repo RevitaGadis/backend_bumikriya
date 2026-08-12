@@ -12,6 +12,7 @@ from app.services import notification_service
 from app.services.ws_manager import manager
 
 router = APIRouter()
+ws_router = APIRouter()
 
 
 async def _authenticate_ws(websocket: WebSocket) -> User:
@@ -37,7 +38,7 @@ async def _authenticate_ws(websocket: WebSocket) -> User:
         db.close()
 
 
-@router.websocket("/ws")
+@ws_router.websocket("/ws/notifications")
 async def notification_ws(websocket: WebSocket) -> None:
     user = await _authenticate_ws(websocket)
     if user is None:

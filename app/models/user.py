@@ -17,6 +17,8 @@ class User(Base):
     address = Column(Text, nullable=True)
     photoprofil = Column(String(255), nullable=True)
     member_type = Column(String(50), nullable=True)
+    store_name = Column(String(255), nullable=True)
+    store_slug = Column(String(255), nullable=True)
     is_admin = Column(Boolean, default=False)
     status = Column(String(20), nullable=False, default="active", server_default="active")
     is_verified = Column(Boolean, nullable=False, default=False, server_default="false")
@@ -31,7 +33,6 @@ class User(Base):
 
     role = relationship("Role", back_populates="users")
     transactions = relationship("Transaction", back_populates="user")
-    savings = relationship("Saving", back_populates="user")
     orders = relationship("Order", back_populates="user")
     carts = relationship("Cart", back_populates="user")
     wishlists = relationship("Wishlist", back_populates="user")

@@ -6,7 +6,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.api.v1.endpoints import auth, home, transaction, category, admin, saving, seller, user, product, order, wishlist, cart, notification
+from app.api.v1.endpoints import auth, home, transaction, category, admin, seller, user, product, order, wishlist, cart, notification
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -39,7 +39,6 @@ app.include_router(auth.router,        prefix="/api/v1/auth",        tags=["Auth
 app.include_router(home.router,        prefix="/api/v1/home",        tags=["Home"])
 app.include_router(transaction.router, prefix="/api/v1",             tags=["Transactions"])
 app.include_router(category.router,    prefix="/api/v1/categories",  tags=["Categories"])
-app.include_router(saving.router,      prefix="/api/v1/savings",     tags=["Savings"])
 app.include_router(seller.router,      prefix="/api/v1/seller",      tags=["Seller"])
 app.include_router(user.router,        prefix="/api/v1/user",        tags=["User"])
 app.include_router(admin.router,       prefix="/api/v1/admin",       tags=["Admin"])
@@ -48,6 +47,7 @@ app.include_router(order.router,       prefix="/api/v1/orders",      tags=["Orde
 app.include_router(wishlist.router,   prefix="/api/v1/wishlists", tags=["Wishlist"])
 app.include_router(cart.router,        prefix="/api/v1/cart",        tags=["Cart"])
 app.include_router(notification.router, prefix="/api/v1/notifications", tags=["Notifications"])
+app.include_router(notification.ws_router, tags=["Notifications"])
 
 @app.get("/")
 async def root():

@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 from app.models.order import Order
 from app.models.product import Product
-from app.models.saving import Saving
 from app.models.transaction import Transaction
 from app.models.user import User
 from app.schemas.dashboard import OrderStatus
@@ -73,12 +72,6 @@ def get_user_dashboard(db: Session, user: User):
         Transaction.user_id == user.id,
         Transaction.transaction_type == TransactionType.expense,
     ).scalar() or 0.0
-    total_saving_target = db.query(func.sum(Saving.target)).filter(
-        Saving.user_id == user.id
-    ).scalar() or 0.0
-    total_saving_saved = db.query(func.sum(Saving.tersimpan)).filter(
-        Saving.user_id == user.id
-    ).scalar() or 0.0
     recent_transactions = db.query(Transaction).filter(
         Transaction.user_id == user.id
     ).order_by(Transaction.transaction_date.desc()).limit(5).all()
@@ -91,12 +84,9 @@ def get_user_dashboard(db: Session, user: User):
             "role": user.role.name if user.role else None,
         },
         "total_transactions": db.query(Transaction).filter(Transaction.user_id == user.id).count(),
-        "total_savings": db.query(Saving).filter(Saving.user_id == user.id).count(),
         "total_income": float(total_income),
         "total_expense": float(total_expense),
         "balance": float(total_income - total_expense),
-        "total_saving_target": float(total_saving_target),
-        "total_saving_saved": float(total_saving_saved),
         "recent_transactions": [
             {
                 "id": transaction.id,
