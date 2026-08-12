@@ -15,16 +15,9 @@ def read_categories(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-<<<<<<< HEAD
-    current_user: User = Depends(deps.get_current_user)
-) -> Any:
-    """
-    Retrieve categories.
-=======
 ) -> Any:
     """
     Retrieve categories. (Public)
->>>>>>> origin/Branch_Azka
     """
     categories = category_service.get_categories(db, skip=skip, limit=limit)
     return categories
@@ -52,16 +45,9 @@ def create_category(
 def read_category(
     category_id: str,
     db: Session = Depends(deps.get_db),
-<<<<<<< HEAD
-    current_admin: User = Depends(deps.get_current_admin)
-) -> Any:
-    """
-    Retrieve a single category. (Admin only)
-=======
 ) -> Any:
     """
     Retrieve a single category. (Public)
->>>>>>> origin/Branch_Azka
     """
     category = category_service.get_category(db, category_id=category_id)
     if not category:

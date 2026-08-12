@@ -46,24 +46,13 @@ class Settings(BaseSettings):
 
     CSRF_SECRET: str = os.getenv("CSRF_SECRET", "your-csrf-secret")
 
-<<<<<<< HEAD
-    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
-    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
-    GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/v1/auth/google/callback")
-=======
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET")
     GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI")
->>>>>>> origin/Branch_Azka
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
     MAX_UPLOAD_SIZE: int = int(os.getenv("MAX_UPLOAD_SIZE", 5 * 1024 * 1024))
-<<<<<<< HEAD
-
-    FIRST_USER_ADMIN_EMAIL: str = os.getenv("FIRST_USER_ADMIN_EMAIL", "admin@finsight.com")
-    FIRST_USER_ADMIN_PASSWORD: str = os.getenv("FIRST_USER_ADMIN_PASSWORD", "admin123")
-=======
     BASE_URL: str = os.getenv("BASE_URL", "http://localhost:8000")
 
     FIRST_USER_ADMIN_EMAIL: str = os.getenv("FIRST_USER_ADMIN_EMAIL")
@@ -78,7 +67,6 @@ class Settings(BaseSettings):
 
     RESET_CODE_EXPIRE_MINUTES: int = int(os.getenv("RESET_CODE_EXPIRE_MINUTES", 10))
     VERIFY_EMAIL_EXPIRE_MINUTES: int = int(os.getenv("VERIFY_EMAIL_EXPIRE_MINUTES", 24 * 60))
->>>>>>> origin/Branch_Azka
 
     class Config:
         case_sensitive = True

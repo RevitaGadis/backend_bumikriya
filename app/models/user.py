@@ -35,3 +35,4 @@ class User(Base):
     carts = relationship("Cart", back_populates="user")
     wishlists = relationship("Wishlist", back_populates="user")
     notifications = relationship("Notification", back_populates="user")
+    store = relationship("Store", back_populates="user", uselist=False)
