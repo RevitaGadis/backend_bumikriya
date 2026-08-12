@@ -17,8 +17,6 @@ from app.schemas.customer import (
     CustomerOrderHistoryResponse,
     AdminOrderDetailResponse,
 )
-from app.schemas.transaction import Transaction as TransactionSchema
-from app.models.transaction import Transaction
 from app.schemas.account import (
     AdminAccountListResponse,
     AdminAccountSummaryResponse,
@@ -52,19 +50,6 @@ def read_customers(
         db, page=page, limit=limit, search=search
     )
     return {"success": True, "data": data}
-
-@router.get("/transactions", response_model=List[TransactionSchema])
-def read_all_transactions(
-    db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
-    current_admin: User = Depends(deps.get_current_admin)
-) -> Any:
-    """
-    Retrieve all transactions in the system. (Admin only)
-    """
-    transactions = db.query(Transaction).offset(skip).limit(limit).all()
-    return transactions
 
 @router.get("/customers/{customer_id}", response_model=CustomerDetailResponse)
 def read_customer_detail(
