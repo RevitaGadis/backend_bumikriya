@@ -50,6 +50,16 @@ def migrate_db():
         with engine.begin() as connection:
             connection.execute(text("ALTER TABLE users ADD COLUMN member_type VARCHAR(50) NULL"))
 
+    if "status" not in user_columns:
+        print("Migrating users table: adding status column")
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE users ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active'"))
+
+    if "is_verified" not in user_columns:
+        print("Migrating users table: adding is_verified column")
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN NOT NULL DEFAULT FALSE"))
+
     if "photoprofil" not in user_columns:
         print("Migrating users table: adding photoprofil column")
         with engine.begin() as connection:

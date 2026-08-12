@@ -53,6 +53,7 @@ class Settings(BaseSettings):
 
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
     MAX_UPLOAD_SIZE: int = int(os.getenv("MAX_UPLOAD_SIZE", 5 * 1024 * 1024))
+    BASE_URL: str = os.getenv("BASE_URL", "http://localhost:8000")
 
     FIRST_USER_ADMIN_EMAIL: str = os.getenv("FIRST_USER_ADMIN_EMAIL")
     FIRST_USER_ADMIN_PASSWORD: str = os.getenv("FIRST_USER_ADMIN_PASSWORD")

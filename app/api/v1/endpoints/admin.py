@@ -1,12 +1,12 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.uploads import save_upload
 
 from app.api import deps
 from app.models.user import User
-from app.services import dashboard_service, customer_service
+from app.services import account_service, dashboard_service, customer_service, user_service
 from app.schemas.dashboard import AdminDashboard
 from app.schemas.user import User as UserSchema
 from app.schemas.customer import (
@@ -19,6 +19,14 @@ from app.schemas.customer import (
 )
 from app.schemas.transaction import Transaction as TransactionSchema
 from app.models.transaction import Transaction
+from app.schemas.account import (
+    AdminAccountListResponse,
+    AdminAccountSummaryResponse,
+    AdminAccountDetailResponse,
+    AdminAccountCreateResponse,
+    AdminAccountUpdateResponse,
+    AdminAccountStatusUpdate,
+)
 
 router = APIRouter()
 
@@ -215,4 +223,179 @@ def read_admin_order_detail(
     return {
         "success": True,
         "data": order_detail
+    }
+
+@router.get("/accounts/summary", response_model=AdminAccountSummaryResponse)
+def read_accounts_summary(
+    db: Session = Depends(deps.get_db),
+    current_admin: User = Depends(deps.get_current_admin),
+) -> Any:
+    """
+    Retrieve account statistics (total, verified, role & status distribution). (Admin only)
+    """
+    return {
+        "success": True,
+        "data": account_service.get_account_summary(db)
+    }
+
+@router.get("/accounts", response_model=AdminAccountListResponse)
+def read_accounts(
+    db: Session = Depends(deps.get_db),
+    page: int = 1,
+    limit: int = 10,
+    search: Optional[str] = None,
+    current_admin: User = Depends(deps.get_current_admin),
+) -> Any:
+    """
+    Retrieve accounts list (admin & seller) with pagination. (Admin only)
+    """
+    data = account_service.get_accounts(
+        db, page=page, limit=limit, search=search
+    )
+    return {
+        "success": True,
+        "message": "Accounts retrieved successfully",
+        "data": data,
+    }
+
+@router.get("/accounts/{account_id}", response_model=AdminAccountDetailResponse)
+def read_account_detail(
+    account_id: str,
+    db: Session = Depends(deps.get_db),
+    current_admin: User = Depends(deps.get_current_admin),
+) -> Any:
+    """
+    Retrieve account detail by account_id. (Admin only)
+    """
+    account = account_service.get_account_detail(db, account_id=account_id)
+    if not account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Account not found",
+        )
+    return {
+        "success": True,
+        "message": "Account retrieved successfully",
+        "data": account,
+    }
+
+@router.post("/accounts", response_model=AdminAccountCreateResponse, status_code=status.HTTP_201_CREATED)
+async def create_account(
+    name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    role: str = Form("seller"),
+    avatar: Optional[UploadFile] = File(None),
+    db: Session = Depends(deps.get_db),
+    current_admin: User = Depends(deps.get_current_admin),
+) -> Any:
+    """
+    Create a new account with optional avatar. (Admin only)
+    """
+    if len(password) < 8 or len(password) > 72:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Password harus antara 8 dan 72 karakter",
+        )
+    if user_service.get_user_by_email(db, email=email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email sudah digunakan",
+        )
+
+    photoprofil = None
+    if avatar and avatar.filename:
+        photoprofil = save_upload(avatar, subdir="avatars")
+
+    account = account_service.create_account(
+        db,
+        {
+            "name": name,
+            "email": email,
+            "password": password,
+            "role": role,
+            "photoprofil": photoprofil,
+        },
+    )
+    return {
+        "success": True,
+        "message": "Account created successfully",
+        "data": account,
+    }
+
+@router.patch("/accounts/{account_id}", response_model=AdminAccountUpdateResponse)
+async def update_account(
+    account_id: str,
+    name: Optional[str] = Form(None),
+    email: Optional[str] = Form(None),
+    role: Optional[str] = Form(None),
+    status_: Optional[str] = Form(None, alias="status"),
+    avatar: Optional[UploadFile] = File(None),
+    remove_avatar: Optional[bool] = Form(None),
+    db: Session = Depends(deps.get_db),
+    current_admin: User = Depends(deps.get_current_admin),
+) -> Any:
+    """
+    Update account data with optional avatar change/removal. (Admin only)
+    """
+    data = {}
+    if name is not None:
+        data["name"] = name
+    if email is not None:
+        data["email"] = email
+    if role is not None:
+        data["role"] = role
+    if status_ is not None:
+        data["status"] = status_
+    if remove_avatar is not None:
+        data["remove_avatar"] = remove_avatar
+    if avatar and avatar.filename:
+        data["photoprofil"] = save_upload(avatar, subdir="avatars")
+
+    try:
+        account = account_service.update_account(db, account_id=account_id, data=data)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+    if not account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Account not found",
+        )
+    return {
+        "success": True,
+        "message": "Account updated successfully",
+        "data": account,
+    }
+
+@router.patch("/accounts/{account_id}/status", response_model=AdminAccountUpdateResponse)
+def update_account_status(
+    account_id: str,
+    body: AdminAccountStatusUpdate,
+    db: Session = Depends(deps.get_db),
+    current_admin: User = Depends(deps.get_current_admin),
+) -> Any:
+    """
+    Activate / deactivate an account. (Admin only)
+    """
+    try:
+        account = account_service.update_account_status(
+            db, account_id=account_id, status_value=body.status
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        )
+    if not account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Account not found",
+        )
+    return {
+        "success": True,
+        "message": "Account updated successfully",
+        "data": account,
     }

@@ -18,6 +18,8 @@ class User(Base):
     photoprofil = Column(String(255), nullable=True)
     member_type = Column(String(50), nullable=True)
     is_admin = Column(Boolean, default=False)
+    status = Column(String(20), nullable=False, default="active", server_default="active")
+    is_verified = Column(Boolean, nullable=False, default=False, server_default="false")
     role_id = Column(String(36), ForeignKey("roles.id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(
