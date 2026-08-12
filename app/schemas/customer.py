@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 
 from pydantic import BaseModel
@@ -25,6 +25,7 @@ class CustomerStats(BaseModel):
 class TopCustomer(BaseModel):
     id: str
     name: str
+    email: str
     avatar: Optional[str] = None
     membership: Optional[str] = None
     total_spent: float

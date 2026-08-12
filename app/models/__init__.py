@@ -10,6 +10,8 @@ from app.models.role import Role
 from app.models.transaction import Transaction
 from app.models.user import User
 from app.models.wishlist import Wishlist
+from app.models.address import Address
+from app.models.store import Store
 
 __all__ = [
     "Cart",
@@ -24,4 +26,6 @@ __all__ = [
     "Transaction",
     "User",
     "Wishlist",
+    "Address",
+    "Store",
 ]

@@ -1,55 +1,158 @@
-from typing import Any
-import re
-
-from fastapi import APIRouter, Depends
+from typing import Any, List
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api import deps
+from app.services import product_service, order_service, store_service
+from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductStockUpdate
+from app.schemas.order import OrderStatusUpdate
+from app.schemas.store import Store, StoreCreate, StoreUpdate
 from app.models.user import User
-from app.services import dashboard_service
-from app.schemas.seller import SellerMeResponse
 
 router = APIRouter()
 
 
-def _store_name(user: User) -> str:
-    return user.store_name or user.name
+# ---------- Register jadi seller ----------
+
+@router.post("/register", response_model=Store, status_code=status.HTTP_201_CREATED)
+def register_as_seller(
+    *,
+    db: Session = Depends(deps.get_db),
+    store_in: StoreCreate,
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Upgrade akun jadi seller + bikin toko. (User biasa yang login)"""
+    return store_service.register_seller(db, current_user, store_in)
 
 
-def _store_slug(user: User) -> str:
-    if user.store_slug:
-        return user.store_slug
-    slug = re.sub(r"[^a-z0-9]+", "-", _store_name(user).lower()).strip("-")
-    return slug or user.id
-
-
-@router.get("/dashboard")
-def read_seller_dashboard(
+@router.get("/store", response_model=Store)
+def read_my_store(
     db: Session = Depends(deps.get_db),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    return dashboard_service.get_user_dashboard(db, current_seller)
+    """Lihat data toko sendiri. (Seller only)"""
+    store = store_service.get_store_by_user(db, current_seller.id)
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+    return store
 
 
-@router.get("/me", response_model=SellerMeResponse)
-def read_seller_me(
+@router.put("/store", response_model=Store)
+def update_my_store(
+    *,
+    db: Session = Depends(deps.get_db),
+    store_in: StoreUpdate,
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    return {
-        "success": True,
-        "message": "Seller ditemukan",
-        "data": {
-            "user": {
-                "id": current_seller.id,
-                "name": current_seller.name,
-                "email": current_seller.email,
-                "role": "seller",
-            },
-            "seller": {
-                "id": current_seller.id,
-                "store_name": _store_name(current_seller),
-                "store_slug": _store_slug(current_seller),
-                "status": current_seller.status,
-            },
-        },
-    }
+    """Update data toko sendiri. (Seller only)"""
+    store = store_service.update_store(db, current_seller.id, store_in)
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+    return store
+
+
+# ---------- Produk ----------
+
+@router.get("/products", response_model=List[Product])
+def read_seller_products(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_seller: User = Depends(deps.get_current_seller),
+) -> Any:
+    """List produk milik seller yang login. (Seller only)"""
+    return product_service.get_products_by_seller(db, current_seller.id, skip, limit)
+
+
+@router.post("/products", response_model=Product, status_code=status.HTTP_201_CREATED)
+def create_seller_product(
+    *,
+    db: Session = Depends(deps.get_db),
+    product_in: ProductCreate,
+    current_seller: User = Depends(deps.get_current_seller),
+) -> Any:
+    """Tambah produk baru. (Seller only)"""
+    return product_service.create_product(db, product_in, seller_id=current_seller.id)
+
+
+@router.put("/products/{product_id}", response_model=Product)
+def update_seller_product(
+    product_id: str,
+    *,
+    db: Session = Depends(deps.get_db),
+    product_in: ProductUpdate,
+    current_seller: User = Depends(deps.get_current_seller),
+) -> Any:
+    """Update produk milik sendiri. (Seller only)"""
+    product = product_service.update_seller_product(db, product_id, current_seller.id, product_in)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found or not owned by you")
+    return product
+
+
+@router.delete("/products/{product_id}")
+def delete_seller_product(
+    product_id: str,
+    *,
+    db: Session = Depends(deps.get_db),
+    current_seller: User = Depends(deps.get_current_seller),
+) -> Any:
+    """Hapus produk milik sendiri. (Seller only)"""
+    deleted = product_service.delete_seller_product(db, product_id, current_seller.id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Product not found or not owned by you")
+    return {"message": "Product deleted successfully"}
+
+
+@router.put("/products/{product_id}/stock", response_model=Product)
+def update_seller_product_stock(
+    product_id: str,
+    *,
+    db: Session = Depends(deps.get_db),
+    stock_in: ProductStockUpdate,
+    current_seller: User = Depends(deps.get_current_seller),
+) -> Any:
+    """Update stok produk milik sendiri. (Seller only)"""
+    product = product_service.update_seller_product_stock(db, product_id, current_seller.id, stock_in.stock)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found or not owned by you")
+    return product
+
+
+# ---------- Orders ----------
+
+@router.get("/orders")
+def read_seller_orders(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_seller: User = Depends(deps.get_current_seller),
+) -> Any:
+    """List order yang mengandung produk milik seller ini. (Seller only)"""
+    return order_service.get_orders_for_seller(db, current_seller.id, skip, limit)
+
+
+@router.put("/orders/{order_id}/status")
+def update_seller_order_status(
+    order_id: int,
+    *,
+    db: Session = Depends(deps.get_db),
+    status_in: OrderStatusUpdate,
+    current_seller: User = Depends(deps.get_current_seller),
+) -> Any:
+    """Update status order (hanya yang ada produk milik seller ini). (Seller only)"""
+    order = order_service.update_seller_order_status(db, order_id, current_seller.id, status_in.status)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found or does not contain your products")
+    return order
+
+
+# ---------- Dashboard ----------
+
+@router.get("/dashboard/summary")
+def seller_dashboard_summary(
+    db: Session = Depends(deps.get_db),
+    current_seller: User = Depends(deps.get_current_seller),
+) -> Any:
+    """Ringkasan performa toko. (Seller only)"""
+    return order_service.get_seller_dashboard_summary(db, current_seller.id)

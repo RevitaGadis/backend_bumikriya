@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from redis import Redis, ConnectionError as RedisConnectionError
 from app.core.redis_mock import RedisMock
 
-# Global instance for in-memory fallback
 _redis_mock = RedisMock()
 
 from app.db.session import SessionLocal
@@ -32,13 +31,11 @@ def get_current_user(
     )
 
     token = None
-    # Try to get token from Authorization header first
     if request and request.headers.get("Authorization"):
         auth_header = request.headers.get("Authorization")
         parts = auth_header.split(" ")
         if len(parts) == 2 and parts[0].lower() == "bearer" and parts[1]:
             token = parts[1]
-    # If not in header, try to get token from cookie
     if not token and request and "access_token" in request.cookies:
         token = request.cookies["access_token"]
     

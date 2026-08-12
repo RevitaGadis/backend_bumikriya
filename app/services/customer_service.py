@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.order import Order
 from app.models.user import User
 from app.schemas.dashboard import OrderStatus
+from typing import Any, Optional
 
 
 def _membership_for(total_spent: float, member_type=None):

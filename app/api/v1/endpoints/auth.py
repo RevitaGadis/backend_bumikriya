@@ -186,7 +186,7 @@ async def register_user(
         + token
     )
 
-    send_email(
+    email_sent = send_email(
         to_email=user_in.email,
         subject="Verifikasi Email Anda",
         body_html=(
@@ -210,6 +210,11 @@ async def register_user(
             f"(berlaku {settings.VERIFY_EMAIL_EXPIRE_MINUTES} menit)"
         ),
     )
+    if not email_sent:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Registrasi diterima, tetapi gagal mengirim email verifikasi. Silakan gunakan 'Kirim Ulang Verifikasi' atau periksa konfigurasi SMTP.",
+        )
 
     return {
         "message": "Registrasi berhasil. Silakan verifikasi email Anda melalui tautan yang dikirim ke email Anda."
@@ -294,7 +299,7 @@ async def resend_verification_email(
         + token_value
     )
 
-    send_email(
+    email_sent = send_email(
         to_email=email,
         subject="Verifikasi Email Anda",
         body_html=(
@@ -318,6 +323,11 @@ async def resend_verification_email(
             f"(berlaku {settings.VERIFY_EMAIL_EXPIRE_MINUTES} menit)"
         ),
     )
+    if not email_sent:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Gagal mengirim email verifikasi. Silakan coba lagi nanti.",
+        )
 
     return {"message": "Tautan verifikasi telah dikirim ulang ke email Anda"}
 
@@ -426,7 +436,7 @@ async def forgot_password(
         code,
     )
 
-    send_email(
+    email_sent = send_email(
         to_email=user.email,
         subject="Kode Verifikasi Reset Password",
         body_html=(
@@ -437,6 +447,11 @@ async def forgot_password(
         ) % (user.name, code, settings.RESET_CODE_EXPIRE_MINUTES),
         body_text=f"Kode verifikasi reset password Anda: {code} (berlaku {settings.RESET_CODE_EXPIRE_MINUTES} menit)",
     )
+    if not email_sent:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Gagal mengirim kode verifikasi. Silakan coba lagi nanti.",
+        )
 
     return {"message": "Kode verifikasi telah dikirim ke email Anda"}
 

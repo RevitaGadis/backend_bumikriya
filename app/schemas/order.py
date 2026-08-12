@@ -124,3 +124,6 @@ class OrderDetail(BaseModel):
 class OrderDetailResponse(BaseModel):
     success: bool
     data: OrderDetail
+
+class OrderStatusUpdate(BaseModel):
+    status: OrderStatus
