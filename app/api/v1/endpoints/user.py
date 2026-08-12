@@ -3,6 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
+from typing import List
+from app.services import address_service
+from app.schemas.address import Address, AddressCreate, AddressUpdate
 
 from app.api import deps
 from app.core.security import verify_password, get_password_hash
@@ -61,3 +64,44 @@ def update_password(
     current_user.hashed_password = get_password_hash(body.password_baru)
     db.commit()
     return {"message": "Password berhasil diubah"}
+
+@router.get("/me/addresses", response_model=List[Address])
+def get_addresses(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+) -> Any:
+    return address_service.get_user_addresses(db, user_id=current_user.id)
+
+
+@router.post("/me/addresses", response_model=Address)
+def create_address(
+    body: AddressCreate,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+) -> Any:
+    return address_service.create_address(db, user_id=current_user.id, data=body)
+
+
+@router.put("/me/addresses/{id}", response_model=Address)
+def update_address(
+    id: str,
+    body: AddressUpdate,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+) -> Any:
+    address = address_service.update_address(db, address_id=id, user_id=current_user.id, data=body)
+    if not address:
+        raise HTTPException(status_code=404, detail="Alamat tidak ditemukan")
+    return address
+
+
+@router.delete("/me/addresses/{id}")
+def delete_address(
+    id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+) -> Any:
+    ok = address_service.delete_address(db, address_id=id, user_id=current_user.id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Alamat tidak ditemukan")
+    return {"message": "Alamat berhasil dihapus"}

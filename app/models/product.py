@@ -10,5 +10,8 @@ class Product(Base):
     name = Column(String(255), nullable=False)
     price = Column(Float, nullable=False, default=0)
     image = Column(String(255), nullable=False)
+    color = Column(String(255), nullable=False)
+    material = Column(String(255), nullable=False)
     stock = Column(Integer, nullable=False, default=0)
+    fits = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
