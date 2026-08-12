@@ -15,10 +15,9 @@ def read_products(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(deps.get_current_user)
 ) -> Any:
     """
-    Retrieve products.
+    Retrieve products. (Public)
     """
     products = product_service.get_products(db, skip=skip, limit=limit)
     return products
@@ -27,7 +26,6 @@ def read_products(
 def read_product(
     product_id: str,
     db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
 ) -> Any:
     """
     Retrieve a single product.

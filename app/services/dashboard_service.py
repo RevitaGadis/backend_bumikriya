@@ -63,5 +63,48 @@ def get_admin_dashboard(db: Session):
     }
 
 
+def get_user_dashboard(db: Session, user: User):
+    total_income = db.query(func.sum(Transaction.amount)).filter(
+        Transaction.user_id == user.id,
+        Transaction.transaction_type == TransactionType.income,
+    ).scalar() or 0.0
+    total_expense = db.query(func.sum(Transaction.amount)).filter(
+        Transaction.user_id == user.id,
+        Transaction.transaction_type == TransactionType.expense,
+    ).scalar() or 0.0
+    total_saving_target = db.query(func.sum(Saving.target)).filter(
+        Saving.user_id == user.id
+    ).scalar() or 0.0
+    total_saving_saved = db.query(func.sum(Saving.tersimpan)).filter(
+        Saving.user_id == user.id
+    ).scalar() or 0.0
+    recent_transactions = db.query(Transaction).filter(
+        Transaction.user_id == user.id
+    ).order_by(Transaction.transaction_date.desc()).limit(5).all()
 
-  
+    return {
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role.name if user.role else None,
+        },
+        "total_transactions": db.query(Transaction).filter(Transaction.user_id == user.id).count(),
+        "total_savings": db.query(Saving).filter(Saving.user_id == user.id).count(),
+        "total_income": float(total_income),
+        "total_expense": float(total_expense),
+        "balance": float(total_income - total_expense),
+        "total_saving_target": float(total_saving_target),
+        "total_saving_saved": float(total_saving_saved),
+        "recent_transactions": [
+            {
+                "id": transaction.id,
+                "description": transaction.description,
+                "amount": float(transaction.amount),
+                "transaction_type": transaction.transaction_type.value,
+                "transaction_date": transaction.transaction_date,
+                "category": transaction.category_rel.name if transaction.category_rel else None,
+            }
+            for transaction in recent_transactions
+        ],
+    }

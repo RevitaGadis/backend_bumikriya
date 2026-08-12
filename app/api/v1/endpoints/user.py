@@ -18,6 +18,7 @@ router = APIRouter()
 class ProfileUpdate(BaseModel):
     name:  Optional[str]      = None
     email: Optional[EmailStr] = None
+    photoprofil: Optional[str] = None
 
 class PasswordUpdate(BaseModel):
     password_lama: str = Field(..., min_length=1)
@@ -49,6 +50,8 @@ def update_profile(
         if existing:
             raise HTTPException(status_code=400, detail="Email sudah digunakan akun lain")
         current_user.email = body.email
+    if "photoprofil" in body.model_fields_set:
+        current_user.photoprofil = body.photoprofil
     db.commit()
     db.refresh(current_user)
     return current_user

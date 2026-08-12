@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.pyc
@@ -70,6 +71,8 @@ instance/
 # OS generated files
 .DS_Store
 Thumbs.db
+=======
+>>>>>>> origin/Branch_Azka
 # Python cache
 __pycache__/
 *.py[cod]
@@ -100,7 +103,11 @@ PKG-INFO
 pip-log.txt
 pip-delete-this-directory.txt
 
+<<<<<<< HEAD
 # Unit test / coverage reports
+=======
+# Testing / coverage
+>>>>>>> origin/Branch_Azka
 htmlcov/
 .tox/
 .coverage
@@ -108,13 +115,18 @@ htmlcov/
 .cache/
 .pytest_cache/
 
+<<<<<<< HEAD
 # Developer stuff
+=======
+# Developer tools
+>>>>>>> origin/Branch_Azka
 .vscode/
 .idea/
 *.swp
 *.bak
 *.swo
 
+<<<<<<< HEAD
 # Virtual environment
 venv/
 env/
@@ -126,6 +138,21 @@ env/
 !.env.example
 
 # My stuff
+=======
+# Virtual environments
+venv/
+.venv/
+env/
+env
+
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+.flaskenv
+# Local application files
+>>>>>>> origin/Branch_Azka
 instance/
 .webassets-cache/
 
@@ -133,6 +160,7 @@ instance/
 *.log
 *.out
 *.err
+<<<<<<< HEAD
 
 # Jupyter Notebook
 .ipynb_checkpoints/
@@ -142,6 +170,18 @@ instance/
 Thumbs.db
 
 # Local database / SQLite
+=======
+/tmp/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Local database
+>>>>>>> origin/Branch_Azka
 *.db
 *.sqlite
 *.sqlite3
