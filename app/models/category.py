@@ -13,3 +13,4 @@ class Category(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     products = relationship("Product", back_populates="category")
+    transactions = relationship("Transaction", back_populates="category_rel")

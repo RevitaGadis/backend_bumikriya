@@ -33,7 +33,12 @@ def read_admin_dashboard(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin)
 ) -> Any:
-    return dashboard_service.get_admin_dashboard(db)
+    data = dashboard_service.get_admin_dashboard(db)
+    return {
+        "success": True,
+        "message": "Dashboard admin berhasil dimuat",
+        "data": data,
+    }
 
 @router.get("/customers", response_model=CustomerListResponse)
 def read_customers(

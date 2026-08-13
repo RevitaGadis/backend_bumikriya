@@ -1,12 +1,13 @@
-from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Any, List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
 from app.api import deps
 from app.services import product_service, order_service, store_service
 from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductStockUpdate
 from app.schemas.order import OrderStatusUpdate
-from app.schemas.store import Store, StoreCreate, StoreUpdate
+from app.schemas.store import Store, StoreUpdate
+from app.core.uploads import save_upload
 from app.models.user import User
 
 router = APIRouter()
@@ -18,11 +19,19 @@ router = APIRouter()
 def register_as_seller(
     *,
     db: Session = Depends(deps.get_db),
-    store_in: StoreCreate,
+    store_name: str = Form(...),
+    description: Optional[str] = Form(None),
+    address: Optional[str] = Form(None),
+    logo: Optional[UploadFile] = File(None),
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """Upgrade akun jadi seller + bikin toko. (User biasa yang login)"""
-    return store_service.register_seller(db, current_user, store_in)
+    logo_path = None
+    if logo and logo.filename:
+        logo_path = save_upload(logo, subdir="stores")
+    return store_service.register_seller(
+        db, current_user, store_name, description=description, logo=logo_path, address=address
+    )
 
 
 @router.get("/store", response_model=Store)

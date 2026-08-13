@@ -3,14 +3,21 @@ from sqlalchemy.orm import Session
 from app.models.store import Store
 from app.models.user import User
 from app.models.role import Role
-from app.schemas.store import StoreCreate, StoreUpdate
+from app.schemas.store import StoreUpdate
 
 
 def get_store_by_user(db: Session, user_id: str) -> Optional[Store]:
     return db.query(Store).filter(Store.user_id == user_id).first()
 
 
-def register_seller(db: Session, current_user: User, store_in: StoreCreate) -> Store:
+def register_seller(
+    db: Session,
+    current_user: User,
+    store_name: str,
+    description: Optional[str] = None,
+    logo: Optional[str] = None,
+    address: Optional[str] = None,
+) -> Store:
     existing = get_store_by_user(db, current_user.id)
     if existing:
         return existing
@@ -22,10 +29,10 @@ def register_seller(db: Session, current_user: User, store_in: StoreCreate) -> S
 
     db_store = Store(
         user_id=current_user.id,
-        store_name=store_in.store_name,
-        description=store_in.description,
-        logo=store_in.logo,
-        address=store_in.address,
+        store_name=store_name,
+        description=description,
+        logo=logo,
+        address=address,
     )
     db.add(db_store)
     db.commit()
