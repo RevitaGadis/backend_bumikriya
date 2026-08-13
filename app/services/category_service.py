@@ -16,6 +16,7 @@ def create_category(db: Session, category: CategoryCreate) -> Category:
     db_category = Category(
         name=category.name,
         description=category.description,
+        image=category.image,
         is_active=category.is_active
     )
     db.add(db_category)
