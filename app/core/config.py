@@ -69,9 +69,9 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = os.getenv("RESEND_API_KEY")
     RESEND_FROM: str = os.getenv("RESEND_FROM", "Bumikriya <onboarding@resend.dev>")
 
-    GMAIL_CLIENT_ID: str = os.getenv("GMAIL_CLIENT_ID")
-    GMAIL_CLIENT_SECRET: str = os.getenv("GMAIL_CLIENT_SECRET")
-    GMAIL_REFRESH_TOKEN: str = os.getenv("GMAIL_REFRESH_TOKEN")
+    GMAIL_CLIENT_ID: Optional[str] = os.getenv("GMAIL_CLIENT_ID")
+    GMAIL_CLIENT_SECRET: Optional[str] = os.getenv("GMAIL_CLIENT_SECRET")
+    GMAIL_REFRESH_TOKEN: Optional[str] = os.getenv("GMAIL_REFRESH_TOKEN")
     GMAIL_FROM: str = os.getenv("GMAIL_FROM", "bumikriya2@gmail.com")
 
     RESET_CODE_EXPIRE_MINUTES: int = int(os.getenv("RESET_CODE_EXPIRE_MINUTES", 10))
