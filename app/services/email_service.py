@@ -5,12 +5,18 @@ import smtplib
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
 
 SMTP_TIMEOUT = 8
 RESEND_API_URL = "https://api.resend.com/emails"
@@ -46,7 +52,9 @@ def _send_via_gmail(to_email: str, subject: str, body_html: str, body_text: str)
     ]
     if missing:
         _LAST_EMAIL_ERROR = f"Gmail API belum dikonfigurasi: {', '.join(missing)}"
-        logger.warning("%s. Email to %s not sent.", _LAST_EMAIL_ERROR, to_email)
+        logger.warning(
+            "[%s] %s. Email to %s not sent.", _timestamp(), _LAST_EMAIL_ERROR, to_email
+        )
         return False
 
     token_data = urllib.parse.urlencode({
@@ -67,17 +75,23 @@ def _send_via_gmail(to_email: str, subject: str, body_html: str, body_text: str)
         _LAST_EMAIL_ERROR = (
             f"Gmail token HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}"
         )
-        logger.error("Gmail token refresh failed for %s: %s", to_email, _LAST_EMAIL_ERROR)
+        logger.error(
+            "[%s] Gmail token refresh failed for %s: %s", _timestamp(), to_email, _LAST_EMAIL_ERROR
+        )
         return False
     except Exception as e:
         _LAST_EMAIL_ERROR = f"{type(e).__name__}: {e}"
-        logger.error("Gmail token request failed for %s: %s", to_email, _LAST_EMAIL_ERROR)
+        logger.error(
+            "[%s] Gmail token request failed for %s: %s", _timestamp(), to_email, _LAST_EMAIL_ERROR
+        )
         return False
 
     access_token = token_info.get("access_token")
     if not access_token:
         _LAST_EMAIL_ERROR = f"Gmail token refresh returned no access_token: {token_info}"
-        logger.error("Gmail token refresh failed for %s: %s", to_email, _LAST_EMAIL_ERROR)
+        logger.error(
+            "[%s] Gmail token refresh failed for %s: %s", _timestamp(), to_email, _LAST_EMAIL_ERROR
+        )
         return False
 
     raw = base64.urlsafe_b64encode(
@@ -102,11 +116,15 @@ def _send_via_gmail(to_email: str, subject: str, body_html: str, body_text: str)
         _LAST_EMAIL_ERROR = (
             f"Gmail send HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}"
         )
-        logger.error("Gmail send failed for %s: %s", to_email, _LAST_EMAIL_ERROR)
+        logger.error(
+            "[%s] Gmail send failed for %s: %s", _timestamp(), to_email, _LAST_EMAIL_ERROR
+        )
         return False
     except Exception as e:
         _LAST_EMAIL_ERROR = f"{type(e).__name__}: {e}"
-        logger.error("Gmail send request failed for %s: %s", to_email, _LAST_EMAIL_ERROR)
+        logger.error(
+            "[%s] Gmail send request failed for %s: %s", _timestamp(), to_email, _LAST_EMAIL_ERROR
+        )
         return False
 
 
@@ -136,16 +154,21 @@ def _send_via_resend(to_email: str, subject: str, body_html: str, body_text: str
         with urllib.request.urlopen(request, timeout=SMTP_TIMEOUT) as resp:
             resp.read()
         _LAST_EMAIL_ERROR = None
+        logger.info("Email sent via Resend API to %s", to_email)
         return True
     except urllib.error.HTTPError as e:
         _LAST_EMAIL_ERROR = (
             f"Resend HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}"
         )
-        logger.error("Resend failed for %s: %s", to_email, _LAST_EMAIL_ERROR)
+        logger.error(
+            "[%s] Resend failed for %s: %s", _timestamp(), to_email, _LAST_EMAIL_ERROR
+        )
         return False
     except Exception as e:
         _LAST_EMAIL_ERROR = f"{type(e).__name__}: {e}"
-        logger.error("Resend request failed for %s: %s", to_email, _LAST_EMAIL_ERROR)
+        logger.error(
+            "[%s] Resend request failed for %s: %s", _timestamp(), to_email, _LAST_EMAIL_ERROR
+        )
         return False
 
 
@@ -154,8 +177,8 @@ def _send_via_smtp(to_email: str, subject: str, body_html: str, body_text: str) 
     if not settings.SMTP_HOST:
         _LAST_EMAIL_ERROR = "SMTP_HOST is not configured"
         logger.warning(
-            "SMTP not configured. Email to %s not sent.\nSubject: %s\nBody:\n%s",
-            to_email, subject, body_text or body_html,
+            "[%s] SMTP not configured. Email to %s not sent.\nSubject: %s\nBody:\n%s",
+            _timestamp(), to_email, subject, body_text or body_html,
         )
         return False
 
@@ -180,22 +203,40 @@ def _send_via_smtp(to_email: str, subject: str, body_html: str, body_text: str) 
             server.sendmail(settings.SMTP_FROM, [to_email], message.as_string())
             server.quit()
             _LAST_EMAIL_ERROR = None
+            logger.info("Email sent via SMTP to %s", to_email)
             return True
         except Exception as e:
             last_error = e
             logger.warning(
-                "SMTP attempt to %s:%s failed for %s: %s",
-                settings.SMTP_HOST, port, to_email, e,
+                "[%s] SMTP attempt to %s:%s failed for %s: %s",
+                _timestamp(), settings.SMTP_HOST, port, to_email, e,
             )
 
     _LAST_EMAIL_ERROR = f"{type(last_error).__name__}: {last_error}"
-    logger.error("Failed to send email to %s: %s", to_email, _LAST_EMAIL_ERROR)
+    logger.error(
+        "[%s] Failed to send email to %s via SMTP: %s", _timestamp(), to_email, _LAST_EMAIL_ERROR
+    )
     return False
 
 
 def send_email(to_email: str, subject: str, body_html: str, body_text: str = "") -> bool:
+    configured_backends = []
     if settings.GMAIL_REFRESH_TOKEN:
+        configured_backends.append("gmail")
+    if settings.RESEND_API_KEY:
+        configured_backends.append("resend")
+    if settings.SMTP_HOST:
+        configured_backends.append("smtp")
+    logger.debug(
+        "send_email called for %s. Configured backend(s): %s",
+        to_email, ", ".join(configured_backends) or "none",
+    )
+
+    if settings.GMAIL_REFRESH_TOKEN:
+        logger.info("Attempting to send email to %s via Gmail API", to_email)
         return _send_via_gmail(to_email, subject, body_html, body_text)
     if settings.RESEND_API_KEY:
+        logger.info("Attempting to send email to %s via Resend API", to_email)
         return _send_via_resend(to_email, subject, body_html, body_text)
+    logger.info("Attempting to send email to %s via SMTP", to_email)
     return _send_via_smtp(to_email, subject, body_html, body_text)
