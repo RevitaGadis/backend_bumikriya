@@ -4,6 +4,7 @@ from pathlib import Path
 from urllib.parse import quote
 from sqlalchemy.engine import make_url
 import os
+from typing import Optional
 
 _ENV_FILE = Path(__file__).resolve().parent.parent.parent / "env"
 if _ENV_FILE.exists():
@@ -68,11 +69,16 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = os.getenv("RESEND_API_KEY")
     RESEND_FROM: str = os.getenv("RESEND_FROM", "Bumikriya <onboarding@resend.dev>")
 
+    GMAIL_CLIENT_ID: str = os.getenv("GMAIL_CLIENT_ID")
+    GMAIL_CLIENT_SECRET: str = os.getenv("GMAIL_CLIENT_SECRET")
+    GMAIL_REFRESH_TOKEN: str = os.getenv("GMAIL_REFRESH_TOKEN")
+    GMAIL_FROM: str = os.getenv("GMAIL_FROM", "bumikriya2@gmail.com")
+
     RESET_CODE_EXPIRE_MINUTES: int = int(os.getenv("RESET_CODE_EXPIRE_MINUTES", 10))
     VERIFY_EMAIL_EXPIRE_MINUTES: int = int(os.getenv("VERIFY_EMAIL_EXPIRE_MINUTES", 24 * 60))
 
-    MIDTRANS_SERVER_KEY: str = os.getenv("MIDTRANS_SERVER_KEY")
-    MIDTRANS_CLIENT_KEY: str = os.getenv("MIDTRANS_CLIENT_KEY")
+    MIDTRANS_SERVER_KEY: Optional[str] = os.getenv("MIDTRANS_SERVER_KEY")
+    MIDTRANS_CLIENT_KEY: Optional[str] = os.getenv("MIDTRANS_CLIENT_KEY")
     MIDTRANS_IS_PRODUCTION: bool = False
 
     class Config:
