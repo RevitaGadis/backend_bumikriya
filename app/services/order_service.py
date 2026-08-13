@@ -10,6 +10,7 @@ from app.models.product import Product
 from app.schemas.order import OrderDetail, OrderUpdate
 from app.schemas.dashboard import OrderStatus, PaymentMethod, PaymentStatus
 from app.services import notification_service
+from app.services import membership_service
 
 STATUS_LABELS = {
     OrderStatus.DIPROSES: ("processing", "Diproses"),
@@ -191,6 +192,10 @@ def update_order(db: Session, order_id: str, order: OrderUpdate) -> Optional[Ord
             reference_type="order",
             reference_id=db_order.id,
         )
+        if db_order.status == OrderStatus.SELESAI:
+            membership_service.add_spending(
+                db, db_order.user_id, float(db_order.total_amount or 0)
+            )
     return db_order
 
 
@@ -284,6 +289,10 @@ def update_seller_order_status(
             reference_type="order",
             reference_id=order.id,
         )
+        if status == OrderStatus.SELESAI:
+            membership_service.add_spending(
+                db, order.user_id, float(order.total_amount or 0)
+            )
     return order
 
 

@@ -4,6 +4,7 @@ from app.core.security import get_password_hash
 from app.models.role import Role
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
+from app.services import membership_service
 
 def get_user_by_id(db: Session, user_id: str):
     return db.query(User).filter(User.id == user_id).first()
@@ -31,6 +32,7 @@ def create_user_with_password(db: Session, name: str, email: str, hashed_passwor
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    membership_service.ensure_user_membership(db, db_user)
     return db_user
 
 def create_oauth_user(db: Session, email: str, name: str, role_name: str = "user"):

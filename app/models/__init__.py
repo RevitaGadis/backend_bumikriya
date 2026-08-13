@@ -12,6 +12,7 @@ from app.models.wishlist import Wishlist
 from app.models.address import Address
 from app.models.store import Store
 from app.models.transaction import Transaction
+from app.models.membership import MembershipType, UserMembership, MembershipBenefit
 
 __all__ = [
     "Cart",
@@ -28,4 +29,7 @@ __all__ = [
     "Address",
     "Store",
     "Transaction",
+    "MembershipType",
+    "UserMembership",
+    "MembershipBenefit",
 ]

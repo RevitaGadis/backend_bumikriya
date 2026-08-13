@@ -37,3 +37,6 @@ class User(Base):
     notifications = relationship("Notification", back_populates="user")
     store = relationship("Store", back_populates="user", uselist=False)
     addresses = relationship("Address", back_populates="user")
+    membership = relationship(
+        "UserMembership", back_populates="user", uselist=False
+    )
