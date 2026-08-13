@@ -26,6 +26,28 @@ def get_membership_type_by_code(db: Session, code: str) -> Optional[MembershipTy
     return db.query(MembershipType).filter(MembershipType.code == code).first()
 
 
+def get_or_create_default_membership_type(db: Session) -> Optional[MembershipType]:
+    default_type = (
+        db.query(MembershipType)
+        .order_by(MembershipType.min_spending.asc())
+        .first()
+    )
+    if default_type:
+        return default_type
+
+    default_type = MembershipType(
+        name="Basic",
+        code="basic",
+        min_spending=0,
+        discount_percentage=0,
+        description="Default membership level",
+    )
+    db.add(default_type)
+    db.commit()
+    db.refresh(default_type)
+    return default_type
+
+
 def ensure_user_membership(db: Session, user) -> UserMembership:
     um = (
         db.query(UserMembership)
@@ -35,11 +57,7 @@ def ensure_user_membership(db: Session, user) -> UserMembership:
     if um:
         return um
 
-    default_type = (
-        db.query(MembershipType)
-        .order_by(MembershipType.min_spending.asc())
-        .first()
-    )
+    default_type = get_or_create_default_membership_type(db)
     um = UserMembership(
         user_id=user.id,
         membership_type_id=default_type.id if default_type else None,
