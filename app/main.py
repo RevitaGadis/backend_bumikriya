@@ -1,15 +1,36 @@
 from pathlib import Path
 import logging
+from typing import Any
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.api.v1.endpoints import auth, checkout, home, category, admin, seller, user, product, order, wishlist, cart, notification,payment
 
 logger = logging.getLogger("uvicorn.error")
+
+
+def _sanitize_binary(obj: Any) -> Any:
+    if isinstance(obj, bytes):
+        return f"<binary data: {len(obj)} bytes>"
+    if isinstance(obj, dict):
+        return {k: _sanitize_binary(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple, set)):
+        return [_sanitize_binary(v) for v in obj]
+    return obj
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": _sanitize_binary(exc.errors())},
+    )
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
