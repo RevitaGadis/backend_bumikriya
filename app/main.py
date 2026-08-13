@@ -1,4 +1,5 @@
 from pathlib import Path
+import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +8,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.api.v1.endpoints import auth, checkout, home, category, admin, seller, user, product, order, wishlist, cart, notification,payment
+
+logger = logging.getLogger("uvicorn.error")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -52,3 +55,14 @@ app.include_router(payment.router, prefix="/payments", tags=["Payments"])
 @app.get("/")
 async def root():
     return {"message": "Welcome to Finsight API!"}
+
+@app.on_event("startup")
+async def _log_email_config():
+    from app.services.email_service import _gmail_configured
+    logger.info(
+        "Email providers configured — gmail=%s resend=%s smtp=%s (host=%s)",
+        _gmail_configured(),
+        bool(settings.RESEND_API_KEY),
+        bool(settings.SMTP_HOST),
+        settings.SMTP_HOST,
+    )

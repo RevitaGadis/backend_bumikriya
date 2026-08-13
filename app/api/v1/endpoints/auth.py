@@ -230,9 +230,13 @@ async def register_user(
         use_resend=False,
     )
     if not email_sent:
+        email_error = get_last_email_error()
+        detail = "Registrasi diterima, tetapi gagal mengirim email verifikasi. Silakan gunakan 'Kirim Ulang Verifikasi'."
+        if email_error:
+            detail += f" ({email_error[:200]})"
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Registrasi diterima, tetapi gagal mengirim email verifikasi. Silakan gunakan 'Kirim Ulang Verifikasi' atau periksa konfigurasi SMTP.",
+            detail=detail,
         )
 
     return {
@@ -344,9 +348,13 @@ async def resend_verification_email(
         use_resend=False,
     )
     if not email_sent:
+        email_error = get_last_email_error()
+        detail = "Gagal mengirim email verifikasi. Silakan coba lagi nanti."
+        if email_error:
+            detail += f" ({email_error[:200]})"
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Gagal mengirim email verifikasi. Silakan coba lagi nanti.",
+            detail=detail,
         )
 
     return {"message": "Tautan verifikasi telah dikirim ulang ke email Anda"}
