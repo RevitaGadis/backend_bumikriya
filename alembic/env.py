@@ -29,6 +29,7 @@ from app.models.wishlist import Wishlist
 from app.models.notification import Notification
 from app.models.address import Address
 from app.models.store import Store
+from app.models.transaction import Transaction
 from app.models.membership import MembershipType, UserMembership, MembershipBenefit
 
 # this is the Alembic Config object, which provides
