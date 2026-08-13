@@ -65,6 +65,9 @@ class Settings(BaseSettings):
     SMTP_FROM: str = os.getenv("SMTP_FROM")
     SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "True").lower() in ("1", "true", "yes", "on")
 
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY")
+    RESEND_FROM: str = os.getenv("RESEND_FROM", "Bumikriya <onboarding@resend.dev>")
+
     RESET_CODE_EXPIRE_MINUTES: int = int(os.getenv("RESET_CODE_EXPIRE_MINUTES", 10))
     VERIFY_EMAIL_EXPIRE_MINUTES: int = int(os.getenv("VERIFY_EMAIL_EXPIRE_MINUTES", 24 * 60))
 
