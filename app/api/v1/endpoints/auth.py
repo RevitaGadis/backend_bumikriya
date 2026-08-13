@@ -227,6 +227,7 @@ async def register_user(
             f"Halo {user_in.name}, verifikasi email Anda dengan membuka link berikut: {verify_url} "
             f"(berlaku {settings.VERIFY_EMAIL_EXPIRE_MINUTES} menit)"
         ),
+        use_resend=False,
     )
     if not email_sent:
         raise HTTPException(
@@ -340,6 +341,7 @@ async def resend_verification_email(
             f"Halo {pending.get('name')}, verifikasi email Anda dengan membuka link berikut: {verify_url} "
             f"(berlaku {settings.VERIFY_EMAIL_EXPIRE_MINUTES} menit)"
         ),
+        use_resend=False,
     )
     if not email_sent:
         raise HTTPException(

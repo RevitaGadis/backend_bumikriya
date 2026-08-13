@@ -203,9 +203,16 @@ def _gmail_configured() -> bool:
     )
 
 
-def send_email(to_email: str, subject: str, body_html: str, body_text: str = "") -> bool:
+def send_email(
+    to_email: str,
+    subject: str,
+    body_html: str,
+    body_text: str = "",
+    *,
+    use_resend: bool = True,
+) -> bool:
     if _gmail_configured() and _send_via_gmail(to_email, subject, body_html, body_text):
         return True
-    if settings.RESEND_API_KEY and _send_via_resend(to_email, subject, body_html, body_text):
+    if use_resend and settings.RESEND_API_KEY and _send_via_resend(to_email, subject, body_html, body_text):
         return True
     return _send_via_smtp(to_email, subject, body_html, body_text)
