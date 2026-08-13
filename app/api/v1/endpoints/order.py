@@ -80,3 +80,26 @@ def update_order(
             detail="Order not found",
         )
     return order
+
+@router.get("/me", response_model=List[Order])
+def read_my_orders(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """List order milik user yang sedang login. (Buyer)"""
+    return order_service.get_orders(db, skip=skip, limit=limit, user_id=current_user.id)
+
+
+@router.get("/me/{order_id}", response_model=Order)
+def read_my_order(
+    order_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Detail order milik sendiri. (Buyer)"""
+    order = order_service.get_order(db, order_id=order_id)
+    if not order or order.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order

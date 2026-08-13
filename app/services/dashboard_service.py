@@ -5,11 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.models.order import Order
 from app.models.product import Product
-from app.models.transaction import Transaction
 from app.models.user import User
 from app.schemas.dashboard import OrderStatus
-from app.schemas.transaction import TransactionType
-
 
 def get_admin_dashboard(db: Session):
     today = datetime.now().date()
@@ -19,8 +16,8 @@ def get_admin_dashboard(db: Session):
     week_end = week_start + timedelta(days=7)
 
     valid_order_filter = Order.status != OrderStatus.DIBATALKAN
-    total_sales = db.query(func.sum(Transaction.amount)).filter(
-        Transaction.transaction_type == TransactionType.income
+    total_sales = db.query(func.sum(Order.total_amount)).filter(
+        valid_order_filter
     ).scalar() or 0
     new_orders = db.query(Order).filter(
         Order.created_at >= today_start,

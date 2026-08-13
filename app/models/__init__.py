@@ -7,7 +7,6 @@ from app.models.order_item import OrderItem
 from app.models.payment import Payment
 from app.models.product import Product
 from app.models.role import Role
-from app.models.transaction import Transaction
 from app.models.user import User
 from app.models.wishlist import Wishlist
 from app.models.address import Address
@@ -23,7 +22,6 @@ __all__ = [
     "Payment",
     "Product",
     "Role",
-    "Transaction",
     "User",
     "Wishlist",
     "Address",
