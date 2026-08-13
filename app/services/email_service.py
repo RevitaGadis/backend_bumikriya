@@ -94,9 +94,13 @@ def _send_via_gmail(to_email: str, subject: str, body_html: str, body_text: str)
     )
     try:
         with urllib.request.urlopen(send_request, timeout=SMTP_TIMEOUT) as resp:
-            resp.read()
+            send_info = json.loads(resp.read().decode("utf-8") or "{}")
         _LAST_EMAIL_ERROR = None
-        logger.info("Email sent via Gmail API to %s", to_email)
+        logger.info(
+            "Email sent via Gmail API to %s (message_id=%s)",
+            to_email,
+            send_info.get("id"),
+        )
         return True
     except urllib.error.HTTPError as e:
         _LAST_EMAIL_ERROR = (
