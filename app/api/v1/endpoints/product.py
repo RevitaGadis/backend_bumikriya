@@ -43,8 +43,12 @@ def create_product(
     *,
     db: Session = Depends(deps.get_db),
     name: str = Form(...),
-    price: float = Form(0),
+    price: float = Form(...),
+    color: str = Form(...),
+    material: str = Form(...),
+    fits: str = Form(...),
     stock: int = Form(0),
+    category_id: str = Form(...),
     is_active: bool = Form(True),
     image: Optional[UploadFile] = File(None),
     current_user: User = Depends(deps.get_current_admin_or_seller)
@@ -60,8 +64,18 @@ def create_product(
         )
 
     image_path = save_upload(image) if image else "/images/products/default.jpg"
-    product_in = ProductCreate(name=name, price=price, image=image_path, stock=stock, is_active=is_active)
-    product = product_service.create_product(db, product=product_in)
+    product_in = ProductCreate(
+        name=name,
+        price=price,
+        image=image_path,
+        color=color,
+        material=material,
+        fits=fits,
+        stock=stock,
+        category_id=category_id,
+        is_active=is_active,
+    )
+    product = product_service.create_product(db, product_in, seller_id=current_user.id)
     return product
 
 @router.put("/{product_id}", response_model=Product)
