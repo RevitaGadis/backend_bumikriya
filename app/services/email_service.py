@@ -193,9 +193,19 @@ def _send_via_smtp(to_email: str, subject: str, body_html: str, body_text: str) 
     return False
 
 
+def _gmail_configured() -> bool:
+    return all(
+        (
+            settings.GMAIL_CLIENT_ID,
+            settings.GMAIL_CLIENT_SECRET,
+            settings.GMAIL_REFRESH_TOKEN,
+        )
+    )
+
+
 def send_email(to_email: str, subject: str, body_html: str, body_text: str = "") -> bool:
-    if settings.GMAIL_REFRESH_TOKEN:
-        return _send_via_gmail(to_email, subject, body_html, body_text)
-    if settings.RESEND_API_KEY:
-        return _send_via_resend(to_email, subject, body_html, body_text)
+    if _gmail_configured() and _send_via_gmail(to_email, subject, body_html, body_text):
+        return True
+    if settings.RESEND_API_KEY and _send_via_resend(to_email, subject, body_html, body_text):
+        return True
     return _send_via_smtp(to_email, subject, body_html, body_text)
