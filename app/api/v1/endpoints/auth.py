@@ -16,7 +16,7 @@ from app.core.config import settings
 from app.core.security import create_access_token, create_refresh_token, verify_password, get_password_hash, decode_token
 from app.api import deps
 from app.services import user_service
-from app.services.email_service import send_email
+from app.services.email_service import send_email, get_last_email_error
 from app.schemas.user import UserCreate, UserLogin, ForgotPasswordRequest, VerifyResetCodeRequest, ResetPasswordRequest, MeResponse
 from app.schemas.token import TokenPayload 
 from app.models.user import User
@@ -466,9 +466,13 @@ async def forgot_password(
         body_text=f"Kode verifikasi reset password Anda: {code} (berlaku {settings.RESET_CODE_EXPIRE_MINUTES} menit)",
     )
     if not email_sent:
+        email_error = get_last_email_error()
+        detail = "Gagal mengirim kode verifikasi. Silakan coba lagi nanti."
+        if email_error:
+            detail += f" ({email_error[:200]})"
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Gagal mengirim kode verifikasi. Silakan coba lagi nanti.",
+            detail=detail,
         )
 
     return {"message": "Kode verifikasi telah dikirim ke email Anda"}

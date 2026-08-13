@@ -49,11 +49,11 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET")
     GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI")
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://three-bug-coder.vercel.app")
 
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
     MAX_UPLOAD_SIZE: int = int(os.getenv("MAX_UPLOAD_SIZE", 5 * 1024 * 1024))
-    BASE_URL: str = os.getenv("BASE_URL", "http://localhost:8000")
+    BASE_URL: str = os.getenv("BASE_URL", "https://backendbumikriya-production.up.railway.app")
 
     FIRST_USER_ADMIN_EMAIL: str = os.getenv("FIRST_USER_ADMIN_EMAIL")
     FIRST_USER_ADMIN_PASSWORD: str = os.getenv("FIRST_USER_ADMIN_PASSWORD")
@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD")
     SMTP_FROM: str = os.getenv("SMTP_FROM")
     SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "True").lower() in ("1", "true", "yes", "on")
+
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY")
+    RESEND_FROM: str = os.getenv("RESEND_FROM", "Bumikriya <onboarding@resend.dev>")
 
     RESET_CODE_EXPIRE_MINUTES: int = int(os.getenv("RESET_CODE_EXPIRE_MINUTES", 10))
     VERIFY_EMAIL_EXPIRE_MINUTES: int = int(os.getenv("VERIFY_EMAIL_EXPIRE_MINUTES", 24 * 60))
