@@ -71,6 +71,10 @@ class Settings(BaseSettings):
     RESET_CODE_EXPIRE_MINUTES: int = int(os.getenv("RESET_CODE_EXPIRE_MINUTES", 10))
     VERIFY_EMAIL_EXPIRE_MINUTES: int = int(os.getenv("VERIFY_EMAIL_EXPIRE_MINUTES", 24 * 60))
 
+    MIDTRANS_SERVER_KEY: str = os.getenv("MIDTRANS_SERVER_KEY")
+    MIDTRANS_CLIENT_KEY: str = os.getenv("MIDTRANS_CLIENT_KEY")
+    MIDTRANS_IS_PRODUCTION: bool = False
+
     class Config:
         case_sensitive = True
 

@@ -17,7 +17,7 @@ from app.db.base import Base
 # Import SEMUA model di sini, biar Alembic "kenal" semua tabel
 from app.models.role import Role
 from app.models.user import User
-from app.models.transaction import Transaction
+from app.models.payment import Payment
 from app.models.category import Category
 from app.models.product import Product
 from app.models.order import Order
