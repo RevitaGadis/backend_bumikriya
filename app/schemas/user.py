@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 from app.schemas.role import Role
 
 class UserBase(BaseModel):
@@ -52,4 +52,12 @@ class VerifyResetCodeRequest(BaseModel):
     code: str = Field(..., min_length=6, max_length=6)
 
 class ResetPasswordRequest(BaseModel):
-    new_password: str = Field(..., min_length=8, max_length=72)
+    password: str = Field(..., min_length=8, max_length=72)
+    password_confirmation: str = Field(..., min_length=8, max_length=72)
+    reset_token: Optional[str] = None
+
+    @model_validator(mode="after")
+    def passwords_match(self):
+        if self.password != self.password_confirmation:
+            raise ValueError("Konfirmasi kata sandi tidak sesuai")
+        return self

@@ -1,6 +1,7 @@
 from datetime import timedelta
 import json
 import secrets
+from urllib.parse import quote
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.responses import RedirectResponse
@@ -119,8 +120,25 @@ async def google_callback(
             db, email=email, name=userinfo.get("name") or email
         )
 
-    _set_auth_cookies(response, user, redis_client)
-    return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?status=success")
+    access_token, refresh_token = _set_auth_cookies(response, user, redis_client)
+    role = user.role.name if user.role else ("admin" if user.is_admin else "user")
+    user_payload = quote(
+        json.dumps(
+            {
+                "id": str(user.id),
+                "name": user.name,
+                "email": user.email,
+                "role": role,
+            },
+            ensure_ascii=False,
+        )
+    )
+    return RedirectResponse(
+        url=(
+            f"{settings.FRONTEND_URL}/login"
+            f"?token={access_token}&user={user_payload}&status=success"
+        )
+    )
 
 @router.post("/login")
 async def login_for_access_token(
@@ -490,7 +508,7 @@ async def verify_reset_code(
         max_age=settings.RESET_CODE_EXPIRE_MINUTES * 60,
     )
 
-    return {"message": "Kode verifikasi valid"}
+    return {"message": "Kode verifikasi valid", "reset_token": reset_token}
 
 @router.post("/reset-password")
 async def reset_password(
@@ -501,7 +519,7 @@ async def reset_password(
     redis_client: Redis = Depends(deps.get_redis_client),
     body: ResetPasswordRequest,
 ) -> Any:
-    reset_token = request.cookies.get("reset_token")
+    reset_token = request.cookies.get("reset_token") or body.reset_token
     if not reset_token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -523,7 +541,7 @@ async def reset_password(
             detail="Email tidak terdaftar",
         )
 
-    user_service.update_password(db, user, body.new_password)
+    user_service.update_password(db, user, body.password)
     redis_client.delete(f"reset_code:{email}")
     redis_client.delete(f"reset_verified:{reset_token}")
     response.delete_cookie(key="reset_token")

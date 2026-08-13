@@ -28,6 +28,7 @@ from app.models.cart_item import CartItem
 from app.models.wishlist import Wishlist
 from app.models.notification import Notification
 from app.models.address import Address
+from app.models.store import Store
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

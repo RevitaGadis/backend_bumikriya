@@ -1,8 +1,12 @@
+from datetime import datetime, time, timedelta
 from typing import List, Optional
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.order import Order
+from app.models.order_item import OrderItem
+from app.models.product import Product
 from app.schemas.order import OrderDetail, OrderUpdate
 from app.schemas.dashboard import OrderStatus, PaymentMethod, PaymentStatus
 from app.services import notification_service
@@ -188,4 +192,160 @@ def update_order(db: Session, order_id: str, order: OrderUpdate) -> Optional[Ord
             reference_id=db_order.id,
         )
     return db_order
+
+
+def _seller_orders_query(db: Session, seller_id: str):
+    return (
+        db.query(Order)
+        .join(OrderItem, OrderItem.order_id == Order.id)
+        .join(Product, Product.id == OrderItem.product_id)
+        .filter(Product.seller_id == seller_id)
+        .distinct()
+    )
+
+
+def get_orders_for_seller(
+    db: Session,
+    seller_id: str,
+    skip: int = 0,
+    limit: int = 100,
+) -> List[dict]:
+    """List order yang mengandung minimal satu produk milik seller. (Seller only)"""
+    orders = (
+        _seller_orders_query(db, seller_id)
+        .order_by(Order.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    result = []
+    for order in orders:
+        status_code, status_label = STATUS_LABELS.get(
+            order.status, (order.status.value, order.status.value)
+        )
+        result.append(
+            {
+                "id": order.id,
+                "order_number": order.order_number,
+                "order_date": order.created_at.strftime("%Y-%m-%d") if order.created_at else "",
+                "total": float(order.total_amount),
+                "status": status_code,
+                "status_label": status_label,
+                "customer": {
+                    "id": order.user_id,
+                    "name": order.user.name if order.user else "",
+                },
+                "items": [
+                    {
+                        "product_id": item.product_id,
+                        "product_name": item.product_name,
+                        "quantity": item.quantity,
+                        "price": float(item.price),
+                        "subtotal": float(item.subtotal),
+                    }
+                    for item in order.items
+                    if item.product and item.product.seller_id == seller_id
+                ],
+            }
+        )
+    return result
+
+
+def update_seller_order_status(
+    db: Session,
+    order_id: int,
+    seller_id: str,
+    status: OrderStatus,
+) -> Optional[Order]:
+    """Update status order hanya jika berisi minimal satu produk milik seller."""
+    order = (
+        _seller_orders_query(db, seller_id)
+        .filter(Order.id == order_id)
+        .first()
+    )
+    if not order:
+        return None
+
+    old_status = order.status
+    order.status = status
+    db.add(order)
+    db.commit()
+    db.refresh(order)
+
+    if status != old_status and order.user_id:
+        label = STATUS_HISTORY_LABELS.get(status, status.value if status else "")
+        notification_service.create_notification(
+            db=db,
+            user_id=order.user_id,
+            title="Update Status Pesanan",
+            message=f"Pesanan {order.order_number} berstatus {label}",
+            notification_type="order",
+            reference_type="order",
+            reference_id=order.id,
+        )
+    return order
+
+
+def get_seller_dashboard_summary(db: Session, seller_id: str) -> dict:
+    """Ringkasan performa toko milik seller. (Seller only)"""
+    today = datetime.now().date()
+    today_start = datetime.combine(today, time.min)
+    tomorrow_start = today_start + timedelta(days=1)
+    week_start = today_start - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=7)
+
+    valid_orders = _seller_orders_query(db, seller_id).filter(
+        Order.status != OrderStatus.DIBATALKAN
+    )
+
+    total_sales = (
+        valid_orders.with_entities(func.sum(Order.total_amount)).scalar() or 0
+    )
+
+    new_orders = _seller_orders_query(db, seller_id).filter(
+        Order.created_at >= today_start,
+        Order.created_at < tomorrow_start,
+    ).count()
+
+    active_products = db.query(Product).filter(
+        Product.seller_id == seller_id,
+        Product.is_active.is_(True),
+    ).count()
+
+    weekly_orders = valid_orders.filter(
+        Order.created_at >= week_start,
+        Order.created_at < week_end,
+    ).all()
+
+    weekly_totals = {week_start.date() + timedelta(days=idx): 0 for idx in range(7)}
+    for order in weekly_orders:
+        weekly_totals[order.created_at.date()] += int(order.total_amount or 0)
+
+    day_names = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
+    recent_orders = _seller_orders_query(db, seller_id).order_by(
+        Order.created_at.desc(), Order.id.desc()
+    ).limit(5).all()
+
+    return {
+        "total_sales": int(total_sales),
+        "new_orders": new_orders,
+        "active_products": active_products,
+        "weekly_sales": [
+            {
+                "day": day_names[idx],
+                "total": weekly_totals[week_start.date() + timedelta(days=idx)],
+            }
+            for idx in range(7)
+        ],
+        "recent_orders": [
+            {
+                "order_number": order.order_number,
+                "customer": order.user.name if order.user else "Customer",
+                "status": order.status.value,
+                "total": int(order.total_amount or 0),
+            }
+            for order in recent_orders
+        ],
+    }
 

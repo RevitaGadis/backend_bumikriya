@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -28,21 +28,41 @@ class PaymentStatus(str, Enum):
     REFUNDED = "REFUNDED"
 
 
-class WeeklySalesItem(BaseModel):
-    day: str
-    total: int
+class TransactionType(str, Enum):
+    INCOME = "income"
+    EXPENSE = "expense"
 
 
-class RecentOrderItem(BaseModel):
-    order_number: str
-    customer: str
-    status: OrderStatus
-    total: int
+class AdminSummary(BaseModel):
+    total_seller: int
+    pesanan_baru: int
+    produk_aktif: int
+
+
+class TopSellerItem(BaseModel):
+    seller_id: str
+    seller_name: str
+    total_orders: int
+    total_products_sold: int
+    total_revenue: int
+
+
+class LatestOrderItem(BaseModel):
+    order_id: str
+    customer_name: str
+    seller_name: str
+    total_amount: int
+    status: str
+    created_at: Optional[str]
+
+
+class AdminDashboardData(BaseModel):
+    summary: AdminSummary
+    top_sellers: List[TopSellerItem]
+    latest_orders: List[LatestOrderItem]
 
 
 class AdminDashboard(BaseModel):
-    total_sales: int
-    new_orders: int
-    active_products: int
-    weekly_sales: List[WeeklySalesItem]
-    recent_orders: List[RecentOrderItem]
+    success: bool
+    message: str
+    data: AdminDashboardData
