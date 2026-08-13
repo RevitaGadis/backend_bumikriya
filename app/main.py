@@ -28,7 +28,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         settings.FRONTEND_URL,
-        "https://finsight-cc26-ps107.up.railway.app",
+        "https://three-bug-coder.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -51,4 +51,4 @@ app.include_router(payment.router, prefix="/payments", tags=["Payments"])
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Finsight API!"}
+    return {"message": "Welcome to BumiKriya API!"}
