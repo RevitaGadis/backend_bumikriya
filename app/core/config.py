@@ -79,7 +79,7 @@ class Settings(BaseSettings):
 
     MIDTRANS_SERVER_KEY: Optional[str] = os.getenv("MIDTRANS_SERVER_KEY")
     MIDTRANS_CLIENT_KEY: Optional[str] = os.getenv("MIDTRANS_CLIENT_KEY")
-    MIDTRANS_IS_PRODUCTION: bool = False
+    MIDTRANS_IS_PRODUCTION: bool = os.getenv("MIDTRANS_IS_PRODUCTION", "False").lower() in ("1", "true", "yes", "on")
 
     class Config:
         case_sensitive = True
