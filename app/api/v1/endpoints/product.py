@@ -1,10 +1,11 @@
+from datetime import datetime
 from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
 from app.api import deps
 from app.services import product_service
-from app.schemas.product import Product, ProductCreate, ProductUpdate
+from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductDetail
 from app.core.uploads import save_upload
 from app.models.user import User
 
@@ -22,13 +23,13 @@ def read_products(
     products = product_service.get_products(db, skip=skip, limit=limit)
     return products
 
-@router.get("/{product_id}", response_model=Product)
+@router.get("/{product_id}", response_model=ProductDetail)
 def read_product(
     product_id: str,
     db: Session = Depends(deps.get_db),
 ) -> Any:
     """
-    Retrieve a single product.
+    Retrieve a single product with full detail (public).
     """
     product = product_service.get_product(db, product_id=product_id)
     if not product:
@@ -36,7 +37,73 @@ def read_product(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found",
         )
-    return product
+
+    images = [
+        {
+            "id": f"img_{product.id}",
+            "url": product.image,
+            "is_primary": True,
+        }
+    ]
+
+    specifications = []
+    if product.material:
+        specifications.append({"name": "Material", "value": product.material})
+    if product.color:
+        specifications.append({"name": "Color", "value": product.color})
+    if product.fits:
+        specifications.append({"name": "Fits", "value": product.fits})
+
+    badges = [b for b in [product.material] if b]
+
+    category = None
+    if product.category:
+        category = {"id": product.category.id, "name": product.category.name}
+
+    seller = None
+    if product.seller:
+        seller = {
+            "id": product.seller.id,
+            "name": product.seller.name,
+            "avatar_url": product.seller.photoprofil,
+            "badge": None,
+            "location": product.seller.address,
+        }
+
+    related = product_service.get_related_products(db, product=product, limit=3)
+    related_products = [
+        {
+            "id": rp.id,
+            "name": rp.name,
+            "price": rp.price,
+            "currency": "USD",
+            "image_url": rp.image,
+        }
+        for rp in related
+    ]
+
+    return {
+        "id": product.id,
+        "name": product.name,
+        "description": None,
+        "price": product.price,
+        "currency": "USD",
+        "stock": product.stock,
+        "images": images,
+        "badges": badges,
+        "category": category,
+        "specifications": specifications,
+        "care_instructions": [],
+        "shipping_info": {
+            "processing_time": "2-4 business days",
+            "shipping_method": "Standard Shipping",
+            "estimated_delivery": "5-8 business days",
+        },
+        "seller": seller,
+        "related_products": related_products,
+        "created_at": None,
+        "updated_at": None,
+    }
 
 @router.post("/", response_model=Product)
 def create_product(
