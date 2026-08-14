@@ -106,6 +106,7 @@ def get_customers(
         top_customer = {
             "id": user.id,
             "name": user.name,
+            "email": user.email,
             "avatar": user.photoprofil,
             "membership": _membership_for(float(total_spent or 0), user.member_type),
             "total_spent": float(total_spent or 0),
