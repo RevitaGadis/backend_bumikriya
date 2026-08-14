@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
@@ -29,13 +30,14 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
             raise HTTPException(status_code=400, detail=f"Stok {product.name} tidak cukup")
 
     subtotal = cart.total_price
-    total_amount = subtotal + data.shipping_cost
+    shipping_cost = Decimal(str(data.shipping_cost))
+    total_amount = subtotal + shipping_cost
 
     db_order = Order(
         user_id=user_id,
         order_number=_generate_order_number(),
         subtotal=subtotal,
-        shipping_cost=data.shipping_cost,
+        shipping_cost=shipping_cost,
         total_amount=total_amount,
         status=OrderStatus.DIPROSES,
         shipping_address=data.shipping_address,
