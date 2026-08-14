@@ -14,6 +14,8 @@ class Payment(Base):
     amount = Column(Numeric(12, 2), nullable=False, default=0)
     status = Column(Enum(PaymentStatus), nullable=False, default=PaymentStatus.PENDING)
     transaction_id = Column(String(100), nullable=True)
+    snap_token = Column(String(200), nullable=True)
+    redirect_url = Column(String(500), nullable=True)
     paid_at = Column(DateTime(timezone=True), nullable=True)
 
     order = relationship("Order", back_populates="payment")
