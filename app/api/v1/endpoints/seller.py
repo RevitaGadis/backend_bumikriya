@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile, Request
 from sqlalchemy.orm import Session
 
 from app.api import deps
@@ -105,14 +105,48 @@ def create_seller_product(
 
 
 @router.put("/products/{product_id}", response_model=Product)
-def update_seller_product(
+async def update_seller_product(
     product_id: str,
+    request: Request,
     *,
     db: Session = Depends(deps.get_db),
-    product_in: ProductUpdate,
+    name: Optional[str] = Form(None),
+    price: Optional[float] = Form(None),
+    color: Optional[str] = Form(None),
+    material: Optional[str] = Form(None),
+    fits: Optional[str] = Form(None),
+    stock: Optional[int] = Form(None),
+    category_id: Optional[str] = Form(None),
+    is_active: Optional[bool] = Form(None),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
     """Update produk milik sendiri. (Seller only)"""
+    update_data: dict = {}
+    if name is not None:
+        update_data["name"] = name
+    if price is not None:
+        update_data["price"] = price
+    if color is not None:
+        update_data["color"] = color
+    if material is not None:
+        update_data["material"] = material
+    if fits is not None:
+        update_data["fits"] = fits
+    if stock is not None:
+        update_data["stock"] = stock
+    if category_id is not None:
+        update_data["category_id"] = category_id
+    if is_active is not None:
+        update_data["is_active"] = is_active
+
+    image_field = (await request.form()).get("image")
+    if image_field is not None:
+        if isinstance(image_field, str) and image_field.strip():
+            update_data["image"] = image_field.strip()
+        elif hasattr(image_field, "filename") and image_field.filename:
+            update_data["image"] = save_upload(image_field)
+
+    product_in = ProductUpdate(**update_data)
     product = product_service.update_seller_product(db, product_id, current_seller.id, product_in)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found or not owned by you")
