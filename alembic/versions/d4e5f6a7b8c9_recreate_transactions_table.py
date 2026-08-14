@@ -1,7 +1,7 @@
 """recreate transactions table
 
 Revision ID: d4e5f6a7b8c9
-Revises: b2c3d4e5f6a7
+Revises: bcdeb2354033
 Create Date: 2026-08-13 21:25:00.000000
 
 """
