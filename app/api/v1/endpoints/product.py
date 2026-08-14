@@ -8,6 +8,7 @@ from app.services import product_service
 from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductDetail
 from app.core.uploads import save_upload
 from app.models.user import User
+from app.models.store import Store
 
 router = APIRouter()
 
@@ -62,10 +63,13 @@ def read_product(
 
     seller = None
     if product.seller:
+        store = db.query(Store).filter(Store.user_id == product.seller.id).first()
         seller = {
             "id": product.seller.id,
-            "name": product.seller.name,
-            "avatar_url": product.seller.photoprofil,
+            "store_id": store.id if store else None,
+            "store_name": store.store_name if store else None,
+            "name": (store.store_name if store else None) or product.seller.name,
+            "avatar_url": store.logo if store else product.seller.photoprofil,
             "badge": None,
             "location": product.seller.address,
         }

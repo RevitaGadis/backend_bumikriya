@@ -24,6 +24,14 @@ def get_store_by_id(db: Session, store_id: str) -> Optional[Store]:
     return db.query(Store).filter(Store.id == store_id).first()
 
 
+def get_store_by_id_or_user(db: Session, store_id: str) -> Optional[Store]:
+    """Cari toko lewat id toko, fallback ke user_id (untuk kompatibilitas link lama)."""
+    store = get_store_by_id(db, store_id)
+    if not store:
+        store = db.query(Store).filter(Store.user_id == store_id).first()
+    return store
+
+
 def slugify(text: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
     return slug or "store"
@@ -42,7 +50,7 @@ def is_user_following(db: Session, user_id: Optional[str], store_id: str) -> boo
 
 def follow_store(db: Session, user_id: str, store_id: str) -> bool:
     """Follow toko. Return True kalau berhasil / sudah follow, False kalau toko tidak ada."""
-    store = get_store_by_id(db, store_id)
+    store = get_store_by_id_or_user(db, store_id)
     if not store:
         return False
 
@@ -59,7 +67,7 @@ def follow_store(db: Session, user_id: str, store_id: str) -> bool:
 
 def unfollow_store(db: Session, user_id: str, store_id: str) -> bool:
     """Unfollow toko. Return True kalau berhasil, False kalau toko tidak ada."""
-    store = get_store_by_id(db, store_id)
+    store = get_store_by_id_or_user(db, store_id)
     if not store:
         return False
 

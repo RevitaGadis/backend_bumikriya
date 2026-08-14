@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 def _get_store_or_404(db: Session, store_id: str) -> Any:
-    store = store_service.get_store_by_id(db, store_id)
+    store = store_service.get_store_by_id_or_user(db, store_id)
     if not store:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
