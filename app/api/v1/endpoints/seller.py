@@ -3,10 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException, status, File, Form, Uploa
 from sqlalchemy.orm import Session
 
 from app.api import deps
-from app.services import product_service, order_service, store_service
+from app.services import product_service, order_service, store_service, voucher_service
 from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductStockUpdate
 from app.schemas.order import OrderStatusUpdate
 from app.schemas.store import Store, StoreUpdate
+from app.schemas.voucher import Voucher
 from app.core.uploads import save_upload
 from app.models.user import User
 
@@ -208,6 +209,22 @@ def update_seller_order_status(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found or does not contain your products")
     return order
+
+
+# ---------- Vouchers ----------
+
+@router.get("/vouchers", response_model=List[Voucher])
+def read_seller_vouchers(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None,
+    current_seller: User = Depends(deps.get_current_seller),
+) -> Any:
+    """List voucher yang dibuat oleh seller yang login. (Seller only)"""
+    return voucher_service.get_vouchers_by_creator(
+        db, current_seller.id, skip, limit, is_active
+    )
 
 
 # ---------- Dashboard ----------

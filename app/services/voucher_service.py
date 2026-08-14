@@ -9,13 +9,18 @@ def get_voucher(db: Session, voucher_id: str) -> Optional[Voucher]:
 def get_voucher_by_code(db: Session, code: str) -> Optional[Voucher]:
     return db.query(Voucher).filter(Voucher.code == code).first()
 
-def get_vouchers(db: Session, skip: int = 0, limit: int = 100, is_active: Optional[bool] = None) -> List[Voucher]:
+def get_vouchers(db: Session, skip: int = 0, limit: int = 100, is_active: Optional[bool] = None, created_by: Optional[str] = None) -> List[Voucher]:
     query = db.query(Voucher)
     if is_active is not None:
         query = query.filter(Voucher.is_active == is_active)
+    if created_by is not None:
+        query = query.filter(Voucher.created_by == created_by)
     return query.order_by(Voucher.created_at.desc(), Voucher.id.desc()).offset(skip).limit(limit).all()
 
-def create_voucher(db: Session, voucher: VoucherCreate) -> Voucher:
+def get_vouchers_by_creator(db: Session, creator_id: str, skip: int = 0, limit: int = 100, is_active: Optional[bool] = None) -> List[Voucher]:
+    return get_vouchers(db, skip=skip, limit=limit, is_active=is_active, created_by=creator_id)
+
+def create_voucher(db: Session, voucher: VoucherCreate, created_by: Optional[str] = None) -> Voucher:
     db_voucher = Voucher(
         code=voucher.code,
         name=voucher.name,
@@ -27,6 +32,7 @@ def create_voucher(db: Session, voucher: VoucherCreate) -> Voucher:
         is_active=voucher.is_active,
         valid_from=voucher.valid_from,
         valid_until=voucher.valid_until,
+        created_by=created_by,
     )
     db.add(db_voucher)
     db.commit()

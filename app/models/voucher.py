@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, Integer, Numeric, String, Text, func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base, generate_uuid
@@ -19,8 +19,10 @@ class Voucher(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     valid_from = Column(DateTime(timezone=True), nullable=True)
     valid_until = Column(DateTime(timezone=True), nullable=True)
+    created_by = Column(String(36), ForeignKey("users.id"), nullable=True, index=True)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
+    creator = relationship("User", foreign_keys=[created_by])
     orders = relationship("Order", back_populates="voucher")

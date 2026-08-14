@@ -55,8 +55,18 @@ def create_voucher(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A voucher with this code already exists.",
         )
-    voucher = voucher_service.create_voucher(db, voucher=voucher_in)
+    voucher = voucher_service.create_voucher(db, voucher=voucher_in, created_by=current_user.id)
     return voucher
+
+def _require_manager(voucher: Any, current_user: User) -> None:
+    is_admin = current_user.is_admin or (
+        current_user.role and current_user.role.name == "admin"
+    )
+    if not is_admin and voucher.created_by != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only manage vouchers you created",
+        )
 
 @router.put("/{voucher_id}", response_model=Voucher)
 def update_voucher(
@@ -75,6 +85,7 @@ def update_voucher(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Voucher not found",
         )
+    _require_manager(voucher, current_user)
     if voucher_in.code is not None and voucher_in.code != voucher.code:
         existing = voucher_service.get_voucher_by_code(db, code=voucher_in.code)
         if existing:
@@ -101,6 +112,7 @@ def delete_voucher(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Voucher not found",
         )
+    _require_manager(voucher, current_user)
     try:
         voucher_service.delete_voucher(db, voucher_id=voucher_id)
     except IntegrityError:

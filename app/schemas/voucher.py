@@ -33,6 +33,7 @@ class VoucherUpdate(BaseModel):
 class VoucherInDBBase(VoucherBase):
     id: str
     used_count: int
+    created_by: Optional[str] = None
     created_at: Optional[datetime] = None
 
     class Config:
