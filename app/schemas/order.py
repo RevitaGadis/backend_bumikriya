@@ -30,18 +30,30 @@ class Payment(BaseModel):
         from_attributes = True
 
 
+class VoucherBrief(BaseModel):
+    id: Optional[str] = None
+    code: Optional[str] = None
+    name: Optional[str] = None
+    discount_percent: float = 0
+
+    class Config:
+        from_attributes = True
+
+
 class Order(BaseModel):
     id: int
     user_id: str
     order_number: str
     subtotal: float
     shipping_cost: float
+    discount: float = 0
     total_amount: float
     status: OrderStatus
     shipping_address: str
     created_at: datetime
     items: List[OrderItem] = []
     payment: Optional[Payment] = None
+    voucher: Optional[VoucherBrief] = None
 
     class Config:
         from_attributes = True
@@ -94,6 +106,7 @@ class PaymentDetail(BaseModel):
     payment_method: Optional[str] = None
     payment_status: Optional[str] = None
     paid_at: Optional[datetime] = None
+    voucher: Optional[VoucherBrief] = None
 
 
 class ShippingDetail(BaseModel):

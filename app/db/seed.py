@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.models.role import Role
 from app.models.user import User
 from app.models.membership import MembershipType, MembershipBenefit, UserMembership
+from app.models.voucher import Voucher
 from app.services import user_service, category_service, membership_service
 from app.schemas.user import UserCreate
 from app.schemas.category import CategoryCreate
@@ -131,6 +132,26 @@ DEFAULT_MEMBERSHIP_TYPES = [
 ]
 
 
+DEFAULT_VOUCHERS = [
+    {
+        "code": "HELLO10",
+        "name": "Diskon 10%",
+        "description": "Potongan 10% untuk semua pembelian",
+        "discount_percent": 10,
+        "max_discount": 50000,
+        "min_purchase": 50000,
+    },
+    {
+        "code": "DISKON20",
+        "name": "Diskon 20%",
+        "description": "Potongan 20% untuk pembelian minimal Rp 100.000",
+        "discount_percent": 20,
+        "max_discount": 100000,
+        "min_purchase": 100000,
+    },
+]
+
+
 def seed_user(
     db: Session,
     name: str,
@@ -244,6 +265,14 @@ def seed_db(db: Session):
                 )
             )
         db.commit()
+
+    for voucher_data in DEFAULT_VOUCHERS:
+        existing = db.query(Voucher).filter(Voucher.code == voucher_data["code"]).first()
+        if existing:
+            continue
+        print(f"Seeding default voucher: {voucher_data['code']}")
+        db.add(Voucher(**voucher_data))
+    db.commit()
 
     users_without_membership = (
         db.query(User)
