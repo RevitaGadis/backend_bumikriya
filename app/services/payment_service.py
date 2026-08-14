@@ -25,6 +25,8 @@ def create_snap_transaction(db: Session, order_id: int, user_id: str) -> dict:
     if not payment:
         raise HTTPException(status_code=400, detail="Payment record not found for this order")
 
+    frontend_url = (settings.FRONTEND_URL or "").rstrip("/")
+
     param = {
         "transaction_details": {
             "order_id": order.order_number,   # PENTING: pakai order_number, bukan order.id — harus unik & idempotent
@@ -33,6 +35,10 @@ def create_snap_transaction(db: Session, order_id: int, user_id: str) -> dict:
         "customer_details": {
             "first_name": order.user.name,
             "email": order.user.email,
+        },
+        "callbacks": {
+            "finish": f"{frontend_url}/pesanan-saya",
+            "error": f"{frontend_url}/keranjang",
         },
     }
 
