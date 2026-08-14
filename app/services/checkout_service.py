@@ -12,6 +12,8 @@ from app.schemas.checkout import CheckoutRequest
 from app.schemas.dashboard import OrderStatus, PaymentStatus
 
 
+from app.services import membership_service
+
 def _generate_order_number() -> str:
     return f"ORD-{uuid.uuid4().hex[:10].upper()}"
 
@@ -68,4 +70,9 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
 
     db.commit()
     db.refresh(db_order)
+
+    membership_service.add_spending(
+        db, user_id, float(total_amount)
+    )
+
     return db_order

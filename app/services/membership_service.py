@@ -8,6 +8,7 @@ from app.models.membership import (
     UserMembership,
     MembershipBenefit,
 )
+from app.models.user import User
 
 
 def format_rupiah(amount: float) -> str:
@@ -100,7 +101,12 @@ def add_spending(db: Session, user_id: str, amount: float) -> UserMembership:
         .first()
     )
     if um is None:
-        return None
+        user = db.query(User).filter(User.id == user_id).first()
+        if user is None:
+            return None
+        um = ensure_user_membership(db, user)
+        if um is None:
+            return None
     um.total_spending = float(um.total_spending or 0) + float(amount)
     db.commit()
     db.refresh(um)
