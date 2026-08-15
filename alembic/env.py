@@ -8,13 +8,11 @@ from alembic import context
 import sys
 import os
 
-# Supaya bisa import dari folder app/
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.db.session import DATABASE_URL
 from app.db.base import Base
 
-# Import SEMUA model di sini, biar Alembic "kenal" semua tabel
 from app.models.role import Role
 from app.models.user import User
 from app.models.payment import Payment
@@ -45,7 +43,6 @@ config.set_main_option("sqlalchemy.url", DATABASE_URL)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# target_metadata dipakai buat --autogenerate
 target_metadata = Base.metadata
 
 

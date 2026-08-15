@@ -52,7 +52,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         settings.FRONTEND_URL,
-        "https://finsight-cc26-ps107.up.railway.app",
+        "https://three-bug-coder.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -78,7 +78,7 @@ app.include_router(voucher.router,    prefix="/api/v1/vouchers",   tags=["Vouche
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Finsight API!"}
+    return {"message": "Welcome to BumiKriya API!"}
 
 @app.on_event("startup")
 async def _log_email_config():

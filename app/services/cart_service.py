@@ -1,5 +1,5 @@
 from typing import Optional
-
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.cart import Cart
@@ -25,9 +25,9 @@ def add_item(db: Session, user_id: str, product_id: str, quantity: int) -> Cart:
     cart = get_or_create_cart(db, user_id)
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product or not product.is_active:
-        return None
+        raise HTTPException(status_code=404, detail="Produk tidak ditemukan atau tidak aktif")
     if quantity > product.stock:
-        return "out_of_stock"
+        raise HTTPException(status_code=400, detail=f"Stok {product.name} tidak cukup (tersisa {product.stock})")
 
     item = (
         db.query(CartItem)
@@ -37,7 +37,7 @@ def add_item(db: Session, user_id: str, product_id: str, quantity: int) -> Cart:
     if item:
         new_quantity = item.quantity + quantity
         if new_quantity > product.stock:
-            return "out_of_stock"
+            raise HTTPException(status_code=400, detail=f"Stok {product.name} tidak cukup (tersisa {product.stock})")
         item.quantity = new_quantity
     else:
         item = CartItem(
@@ -55,16 +55,16 @@ def add_item(db: Session, user_id: str, product_id: str, quantity: int) -> Cart:
 def update_item_quantity(db: Session, user_id: str, item_id: int, quantity: int) -> Cart:
     cart = get_cart(db, user_id)
     if not cart:
-        return None
+        raise HTTPException(status_code=404, detail="Cart tidak ditemukan")
     item = (
         db.query(CartItem)
         .filter(CartItem.id == item_id, CartItem.cart_id == cart.id)
         .first()
     )
     if not item:
-        return None
+        raise HTTPException(status_code=404, detail="Item tidak ditemukan di cart")
     if quantity > item.product.stock:
-        return "out_of_stock"
+        raise HTTPException(status_code=400, detail=f"Stok tidak cukup (tersisa {item.product.stock})")
     item.quantity = quantity
     db.commit()
     return get_cart(db, user_id)
