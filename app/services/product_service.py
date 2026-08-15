@@ -63,6 +63,19 @@ def get_products_by_seller(db: Session, seller_id: str, skip: int = 0, limit: in
     return db.query(Product).filter(Product.seller_id == seller_id).offset(skip).limit(limit).all()
 
 
+def get_related_products(db: Session, product: Product, limit: int = 3) -> List[Product]:
+    return (
+        db.query(Product)
+        .filter(
+            Product.id != product.id,
+            Product.is_active == True,  # noqa: E711
+            ((Product.seller_id == product.seller_id) | (Product.category_id == product.category_id)),
+        )
+        .limit(limit)
+        .all()
+    )
+
+
 def get_product_owned_by_seller(db: Session, product_id: str, seller_id: str) -> Optional[Product]:
     return db.query(Product).filter(Product.id == product_id, Product.seller_id == seller_id).first()
 

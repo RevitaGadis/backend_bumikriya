@@ -98,11 +98,21 @@ def get_order_detail(db: Session, order_id: str) -> Optional[OrderDetail]:
     payment_data = {
         "subtotal": float(order.subtotal),
         "shipping_cost": float(order.shipping_cost),
-        "discount": 0,
+        "discount": float(order.discount),
         "total": float(order.total_amount),
         "payment_method": PAYMENT_METHOD_LABELS.get(payment.method) if payment else None,
         "payment_status": PAYMENT_STATUS_LABELS.get(payment.status) if payment else None,
         "paid_at": payment.paid_at if payment else None,
+        "voucher": (
+            {
+                "id": order.voucher.id,
+                "code": order.voucher.code,
+                "name": order.voucher.name,
+                "discount_percent": float(order.voucher.discount_percent),
+            }
+            if order.voucher
+            else None
+        ),
     }
 
     shipping_data = {

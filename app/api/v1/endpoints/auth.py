@@ -227,11 +227,16 @@ async def register_user(
             f"Halo {user_in.name}, verifikasi email Anda dengan membuka link berikut: {verify_url} "
             f"(berlaku {settings.VERIFY_EMAIL_EXPIRE_MINUTES} menit)"
         ),
+        use_resend=False,
     )
     if not email_sent:
+        email_error = get_last_email_error()
+        detail = "Registrasi diterima, tetapi gagal mengirim email verifikasi. Silakan gunakan 'Kirim Ulang Verifikasi'."
+        if email_error:
+            detail += f" ({email_error[:200]})"
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Registrasi diterima, tetapi gagal mengirim email verifikasi. Silakan gunakan 'Kirim Ulang Verifikasi' atau periksa konfigurasi SMTP.",
+            detail=detail,
         )
 
     return {
@@ -340,11 +345,16 @@ async def resend_verification_email(
             f"Halo {pending.get('name')}, verifikasi email Anda dengan membuka link berikut: {verify_url} "
             f"(berlaku {settings.VERIFY_EMAIL_EXPIRE_MINUTES} menit)"
         ),
+        use_resend=False,
     )
     if not email_sent:
+        email_error = get_last_email_error()
+        detail = "Gagal mengirim email verifikasi. Silakan coba lagi nanti."
+        if email_error:
+            detail += f" ({email_error[:200]})"
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Gagal mengirim email verifikasi. Silakan coba lagi nanti.",
+            detail=detail,
         )
 
     return {"message": "Tautan verifikasi telah dikirim ulang ke email Anda"}
@@ -551,3 +561,21 @@ async def reset_password(
     response.delete_cookie(key="reset_token")
 
     return {"message": "Password berhasil direset"}
+
+@router.get("/email-config")
+async def email_config_status() -> Any:
+    from app.services.email_service import _gmail_configured
+
+    def _info(value):
+        if not value:
+            return {"set": False}
+        return {"set": True, "chars": len(value), "prefix": str(value)[:6]}
+
+    return {
+        "gmail_configured": _gmail_configured(),
+        "gmail_client_id": _info(settings.GMAIL_CLIENT_ID),
+        "gmail_client_secret": _info(settings.GMAIL_CLIENT_SECRET),
+        "gmail_refresh_token": _info(settings.GMAIL_REFRESH_TOKEN),
+        "resend_api_key": _info(settings.RESEND_API_KEY),
+        "smtp_host": {"set": bool(settings.SMTP_HOST), "value": settings.SMTP_HOST},
+    }

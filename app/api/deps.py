@@ -57,6 +57,32 @@ def get_current_user(
         raise credentials_exception
     return user
 
+def get_current_user_optional(
+    db: Session = Depends(get_db), request: Request = None
+) -> Optional[User]:
+    """Mengembalikan user jika token valid, None jika anonim. Tidak pernah raise."""
+    token = None
+    if request and request.headers.get("Authorization"):
+        auth_header = request.headers.get("Authorization")
+        parts = auth_header.split(" ")
+        if len(parts) == 2 and parts[0].lower() == "bearer" and parts[1]:
+            token = parts[1]
+    if not token and request and "access_token" in request.cookies:
+        token = request.cookies["access_token"]
+    if not token:
+        return None
+
+    try:
+        payload = decode_token(token)
+        if payload is None or payload.sub is None:
+            return None
+        user_id = payload.sub
+    except JWTError:
+        return None
+    user = db.query(User).filter(User.id == user_id).first()
+    return user
+
+
 def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     if not current_user.is_admin and (not current_user.role or current_user.role.name != "admin"):
         raise HTTPException(

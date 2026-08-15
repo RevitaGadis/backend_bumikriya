@@ -6,7 +6,8 @@ from app.core.uploads import save_upload
 
 from app.api import deps
 from app.models.user import User
-from app.services import account_service, dashboard_service, customer_service, user_service
+from app.services import account_service, dashboard_service, customer_service, user_service, voucher_service
+from app.schemas.voucher import Voucher as VoucherSchema
 from app.schemas.dashboard import AdminDashboard
 from app.schemas.user import User as UserSchema
 from app.schemas.customer import (
@@ -27,6 +28,23 @@ from app.schemas.account import (
 )
 
 router = APIRouter()
+
+@router.get("/vouchers", response_model=List[VoucherSchema])
+def read_all_vouchers(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None,
+    created_by: Optional[str] = None,
+    current_admin: User = Depends(deps.get_current_admin),
+) -> Any:
+    """
+    Retrieve all vouchers. (Admin only)
+    """
+    return voucher_service.get_vouchers(
+        db, skip=skip, limit=limit, is_active=is_active, created_by=created_by
+    )
+
 
 @router.get("/dashboard", response_model=AdminDashboard)
 def read_admin_dashboard(

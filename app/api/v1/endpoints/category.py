@@ -1,11 +1,12 @@
-from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Any, List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api import deps
 from app.services import category_service
 from app.schemas.category import Category, CategoryCreate, CategoryUpdate
+from app.core.uploads import save_upload
 from app.models.user import User
 
 router = APIRouter()
@@ -26,18 +27,28 @@ def read_categories(
 def create_category(
     *,
     db: Session = Depends(deps.get_db),
-    category_in: CategoryCreate,
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    is_active: bool = Form(True),
+    image: Optional[UploadFile] = File(None),
     current_admin: User = Depends(deps.get_current_admin)
 ) -> Any:
     """
-    Create a new category. (Admin only)
+    Create a new category with image upload. (Admin only)
     """
-    existing = category_service.get_category_by_name(db, name=category_in.name)
+    existing = category_service.get_category_by_name(db, name=name)
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A category with this name already exists.",
         )
+    image_path = save_upload(image, subdir="categories") if image else None
+    category_in = CategoryCreate(
+        name=name,
+        description=description,
+        is_active=is_active,
+        image=image_path,
+    )
     category = category_service.create_category(db, category=category_in)
     return category
 
@@ -62,11 +73,14 @@ def update_category(
     category_id: str,
     *,
     db: Session = Depends(deps.get_db),
-    category_in: CategoryUpdate,
+    name: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    is_active: Optional[bool] = Form(None),
+    image: Optional[UploadFile] = File(None),
     current_admin: User = Depends(deps.get_current_admin)
 ) -> Any:
     """
-    Update a category. (Admin only)
+    Update a category with optional image upload. (Admin only)
     """
     category = category_service.get_category(db, category_id=category_id)
     if not category:
@@ -74,13 +88,20 @@ def update_category(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found",
         )
-    if category_in.name and category_in.name != category.name:
-        existing = category_service.get_category_by_name(db, name=category_in.name)
+    if name and name != category.name:
+        existing = category_service.get_category_by_name(db, name=name)
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="A category with this name already exists.",
             )
+    image_path = save_upload(image, subdir="categories") if image else None
+    category_in = CategoryUpdate(
+        name=name,
+        description=description,
+        is_active=is_active,
+        image=image_path,
+    )
     category = category_service.update_category(db, category_id=category_id, category=category_in)
     return category
 

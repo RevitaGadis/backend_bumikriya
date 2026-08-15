@@ -1,12 +1,13 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile, Request
 from sqlalchemy.orm import Session
 
 from app.api import deps
-from app.services import product_service, order_service, store_service
+from app.services import product_service, order_service, store_service, voucher_service
 from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductStockUpdate
 from app.schemas.order import OrderStatusUpdate
 from app.schemas.store import Store, StoreUpdate
+from app.schemas.voucher import Voucher
 from app.core.uploads import save_upload
 from app.models.user import User
 
@@ -77,22 +78,76 @@ def read_seller_products(
 def create_seller_product(
     *,
     db: Session = Depends(deps.get_db),
-    product_in: ProductCreate,
+    name: str = Form(...),
+    price: float = Form(...),
+    color: str = Form(...),
+    material: str = Form(...),
+    fits: str = Form(...),
+    stock: int = Form(0),
+    category_id: str = Form(...),
+    is_active: bool = Form(True),
+    image: Optional[UploadFile] = File(None),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
     """Tambah produk baru. (Seller only)"""
+    image_path = save_upload(image) if image else "/images/products/default.jpg"
+    product_in = ProductCreate(
+        name=name,
+        price=price,
+        image=image_path,
+        color=color,
+        material=material,
+        fits=fits,
+        stock=stock,
+        category_id=category_id,
+        is_active=is_active,
+    )
     return product_service.create_product(db, product_in, seller_id=current_seller.id)
 
 
 @router.put("/products/{product_id}", response_model=Product)
-def update_seller_product(
+async def update_seller_product(
     product_id: str,
+    request: Request,
     *,
     db: Session = Depends(deps.get_db),
-    product_in: ProductUpdate,
+    name: Optional[str] = Form(None),
+    price: Optional[float] = Form(None),
+    color: Optional[str] = Form(None),
+    material: Optional[str] = Form(None),
+    fits: Optional[str] = Form(None),
+    stock: Optional[int] = Form(None),
+    category_id: Optional[str] = Form(None),
+    is_active: Optional[bool] = Form(None),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
     """Update produk milik sendiri. (Seller only)"""
+    update_data: dict = {}
+    if name is not None:
+        update_data["name"] = name
+    if price is not None:
+        update_data["price"] = price
+    if color is not None:
+        update_data["color"] = color
+    if material is not None:
+        update_data["material"] = material
+    if fits is not None:
+        update_data["fits"] = fits
+    if stock is not None:
+        update_data["stock"] = stock
+    if category_id is not None:
+        update_data["category_id"] = category_id
+    if is_active is not None:
+        update_data["is_active"] = is_active
+
+    image_field = (await request.form()).get("image")
+    if image_field is not None:
+        if isinstance(image_field, str) and image_field.strip():
+            update_data["image"] = image_field.strip()
+        elif hasattr(image_field, "filename") and image_field.filename:
+            update_data["image"] = save_upload(image_field)
+
+    product_in = ProductUpdate(**update_data)
     product = product_service.update_seller_product(db, product_id, current_seller.id, product_in)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found or not owned by you")
@@ -154,6 +209,22 @@ def update_seller_order_status(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found or does not contain your products")
     return order
+
+
+# ---------- Vouchers ----------
+
+@router.get("/vouchers", response_model=List[Voucher])
+def read_seller_vouchers(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None,
+    current_seller: User = Depends(deps.get_current_seller),
+) -> Any:
+    """List voucher yang dibuat oleh seller yang login. (Seller only)"""
+    return voucher_service.get_vouchers_by_creator(
+        db, current_seller.id, skip, limit, is_active
+    )
 
 
 # ---------- Dashboard ----------

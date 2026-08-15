@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
 from app.models.role import Role
 from app.models.user import User
-from app.services import user_service, category_service
+from app.models.membership import MembershipType, MembershipBenefit, UserMembership
+from app.models.voucher import Voucher
+from app.services import user_service, category_service, membership_service
 from app.schemas.user import UserCreate
 from app.schemas.category import CategoryCreate
 from app.core.config import settings
@@ -75,6 +77,80 @@ DEFAULT_CATEGORIES = [
         "description": "Kategori lain di luar daftar utama",
     },
 ]
+
+DEFAULT_MEMBERSHIP_TYPES = [
+    {
+        "name": "Bronze Member",
+        "code": "bronze",
+        "min_spending": 0,
+        "discount_percentage": 0,
+        "description": "Level keanggotaan dasar",
+        "benefits": [
+            "Poin reward untuk setiap pembelian",
+            "Akses ke koleksi dasar",
+        ],
+    },
+    {
+        "name": "Silver Member",
+        "code": "silver",
+        "min_spending": 500000,
+        "discount_percentage": 3,
+        "description": "Level keanggotaan menengah",
+        "benefits": [
+            "Diskon 3% untuk semua produk",
+            "Gratis ongkir untuk pembelian di atas Rp 300.000",
+            "Akses ke koleksi baru",
+        ],
+    },
+    {
+        "name": "Gold Member",
+        "code": "gold",
+        "min_spending": 1000000,
+        "discount_percentage": 5,
+        "description": "Level keanggotaan premium",
+        "benefits": [
+            "Diskon 5% untuk semua produk",
+            "Gratis ongkir setiap akhir pekan",
+            "Akses awal ke koleksi baru",
+            "Undangan eksklusif workshop",
+        ],
+    },
+    {
+        "name": "Platinum Member",
+        "code": "platinum",
+        "min_spending": 3000000,
+        "discount_percentage": 10,
+        "description": "Level keanggotaan tertinggi",
+        "benefits": [
+            "Diskon 10% untuk semua produk",
+            "Gratis ongkir tanpa syarat",
+            "Akses prioritas ke koleksi baru",
+            "Undangan eksklusif workshop dan event",
+            "Layanan konsultasi personal",
+        ],
+    },
+]
+
+
+DEFAULT_VOUCHERS = [
+    {
+        "code": "HELLO10",
+        "name": "Diskon 10%",
+        "description": "Potongan 10% untuk semua pembelian",
+        "discount_percent": 10,
+        "max_discount": 50000,
+        "min_purchase": 50000,
+    },
+    {
+        "code": "DISKON20",
+        "name": "Diskon 20%",
+        "description": "Potongan 20% untuk pembelian minimal Rp 100.000",
+        "discount_percent": 20,
+        "max_discount": 100000,
+        "min_purchase": 100000,
+    },
+]
+
 
 def seed_user(
     db: Session,
@@ -161,3 +237,48 @@ def seed_db(db: Session):
                 is_active=True,
             ),
         )
+
+    for membership_data in DEFAULT_MEMBERSHIP_TYPES:
+        existing = membership_service.get_membership_type_by_code(
+            db, code=membership_data["code"]
+        )
+        if existing:
+            continue
+
+        print(f"Seeding default membership type: {membership_data['code']}")
+        membership_type = MembershipType(
+            name=membership_data["name"],
+            code=membership_data["code"],
+            min_spending=membership_data["min_spending"],
+            discount_percentage=membership_data["discount_percentage"],
+            description=membership_data["description"],
+        )
+        db.add(membership_type)
+        db.commit()
+        db.refresh(membership_type)
+
+        for benefit_text in membership_data["benefits"]:
+            db.add(
+                MembershipBenefit(
+                    membership_type_id=membership_type.id,
+                    benefit=benefit_text,
+                )
+            )
+        db.commit()
+
+    for voucher_data in DEFAULT_VOUCHERS:
+        existing = db.query(Voucher).filter(Voucher.code == voucher_data["code"]).first()
+        if existing:
+            continue
+        print(f"Seeding default voucher: {voucher_data['code']}")
+        db.add(Voucher(**voucher_data))
+    db.commit()
+
+    users_without_membership = (
+        db.query(User)
+        .filter(~User.id.in_(db.query(UserMembership.user_id)))
+        .all()
+    )
+    for db_user in users_without_membership:
+        membership_service.ensure_user_membership(db, db_user)
+        print(f"Seeding user membership for: {db_user.email}")

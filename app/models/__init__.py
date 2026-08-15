@@ -11,7 +11,10 @@ from app.models.user import User
 from app.models.wishlist import Wishlist
 from app.models.address import Address
 from app.models.store import Store
+from app.models.store_follow import StoreFollow
 from app.models.transaction import Transaction
+from app.models.membership import MembershipType, UserMembership, MembershipBenefit
+from app.models.voucher import Voucher
 
 __all__ = [
     "Cart",
@@ -27,5 +30,10 @@ __all__ = [
     "Wishlist",
     "Address",
     "Store",
+    "StoreFollow",
     "Transaction",
+    "MembershipType",
+    "UserMembership",
+    "MembershipBenefit",
+    "Voucher",
 ]

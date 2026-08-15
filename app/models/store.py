@@ -16,3 +16,4 @@ class Store(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User", back_populates="store")
+    follows = relationship("StoreFollow", back_populates="store", cascade="all, delete-orphan")

@@ -7,3 +7,4 @@ class CheckoutRequest(BaseModel):
     shipping_address: str
     payment_method: PaymentMethod
     shipping_cost: float = 0
+    voucher_code: Optional[str] = None

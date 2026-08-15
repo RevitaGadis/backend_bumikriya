@@ -5,6 +5,7 @@ from pydantic import BaseModel
 class CategoryBase(BaseModel):
     name: str
     description: Optional[str] = None
+    image: Optional[str] = None
     is_active: Optional[bool] = True
 
 class CategoryCreate(CategoryBase):

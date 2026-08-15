@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field, model_validator
 from app.schemas.role import Role
 
@@ -39,6 +39,47 @@ class MeResponse(BaseModel):
     name: str
     email: EmailStr
     role: str
+
+class MembershipResponse(BaseModel):
+    current_level: str
+    current_level_code: str
+    next_level: Optional[str] = None
+    next_level_code: Optional[str] = None
+    progress_percentage: int
+    remaining_amount: int
+    progress_text: str
+    benefits: List[str] = []
+    discount_percentage: float = 0
+
+class OrderProductResponse(BaseModel):
+    id: Optional[str] = None
+    name: Optional[str] = None
+    image: Optional[str] = None
+
+class OrderInProfile(BaseModel):
+    id: str
+    order_number: str
+    product: OrderProductResponse
+    price: float
+    status: str
+    status_code: str
+    action: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+class UserProfile(BaseModel):
+    id: str
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    is_admin: bool = False
+    role_id: Optional[str] = None
+    member_type: Optional[str] = None
+    photoprofil: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    role: Optional[Role] = None
+    membership: Optional[MembershipResponse] = None
+    orders: List[OrderInProfile] = []
 
 class UserLogin(BaseModel):
     email: EmailStr
