@@ -11,15 +11,32 @@ from typing import Any, Optional
 
 
 def _membership_for(total_spent: float, member_type=None):
+    from app.services.membership_service import _normalize_key
+
     if member_type:
-        return member_type
-    if total_spent >= 10000000:
-        return "Platinum"
-    if total_spent >= 5000000:
-        return "Gold"
+        key = _normalize_key(member_type)
+        mapping = {
+            "regular": "Bronze Member",
+            "regularmember": "Bronze Member",
+            "basic": "Bronze Member",
+            "basicmember": "Bronze Member",
+            "bronze": "Bronze Member",
+            "bronzemember": "Bronze Member",
+            "silver": "Silver Member",
+            "silvermember": "Silver Member",
+            "gold": "Gold Member",
+            "goldmember": "Gold Member",
+            "platinum": "Platinum Member",
+            "platinummember": "Platinum Member",
+        }
+        return mapping.get(key, member_type)
+    if total_spent >= 3000000:
+        return "Platinum Member"
     if total_spent >= 1000000:
-        return "Silver"
-    return "Bronze"
+        return "Gold Member"
+    if total_spent >= 500000:
+        return "Silver Member"
+    return "Bronze Member"
 
 
 def _initial_for(name: str) -> str:

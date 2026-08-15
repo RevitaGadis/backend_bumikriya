@@ -90,3 +90,14 @@ async def _log_email_config():
         bool(settings.SMTP_HOST),
         settings.SMTP_HOST,
     )
+
+
+@app.on_event("startup")
+async def _seed_default_membership_types():
+    from app.db.session import SessionLocal
+    from app.services.membership_service import ensure_default_membership_types
+    db = SessionLocal()
+    try:
+        ensure_default_membership_types(db)
+    finally:
+        db.close()
