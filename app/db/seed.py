@@ -78,60 +78,6 @@ DEFAULT_CATEGORIES = [
     },
 ]
 
-DEFAULT_MEMBERSHIP_TYPES = [
-    {
-        "name": "Bronze Member",
-        "code": "bronze",
-        "min_spending": 0,
-        "discount_percentage": 0,
-        "description": "Level keanggotaan dasar",
-        "benefits": [
-            "Poin reward untuk setiap pembelian",
-            "Akses ke koleksi dasar",
-        ],
-    },
-    {
-        "name": "Silver Member",
-        "code": "silver",
-        "min_spending": 500000,
-        "discount_percentage": 3,
-        "description": "Level keanggotaan menengah",
-        "benefits": [
-            "Diskon 3% untuk semua produk",
-            "Gratis ongkir untuk pembelian di atas Rp 300.000",
-            "Akses ke koleksi baru",
-        ],
-    },
-    {
-        "name": "Gold Member",
-        "code": "gold",
-        "min_spending": 1000000,
-        "discount_percentage": 5,
-        "description": "Level keanggotaan premium",
-        "benefits": [
-            "Diskon 5% untuk semua produk",
-            "Gratis ongkir setiap akhir pekan",
-            "Akses awal ke koleksi baru",
-            "Undangan eksklusif workshop",
-        ],
-    },
-    {
-        "name": "Platinum Member",
-        "code": "platinum",
-        "min_spending": 3000000,
-        "discount_percentage": 10,
-        "description": "Level keanggotaan tertinggi",
-        "benefits": [
-            "Diskon 10% untuk semua produk",
-            "Gratis ongkir tanpa syarat",
-            "Akses prioritas ke koleksi baru",
-            "Undangan eksklusif workshop dan event",
-            "Layanan konsultasi personal",
-        ],
-    },
-]
-
-
 DEFAULT_VOUCHERS = [
     {
         "code": "HELLO10",
@@ -238,33 +184,7 @@ def seed_db(db: Session):
             ),
         )
 
-    for membership_data in DEFAULT_MEMBERSHIP_TYPES:
-        existing = membership_service.get_membership_type_by_code(
-            db, code=membership_data["code"]
-        )
-        if existing:
-            continue
-
-        print(f"Seeding default membership type: {membership_data['code']}")
-        membership_type = MembershipType(
-            name=membership_data["name"],
-            code=membership_data["code"],
-            min_spending=membership_data["min_spending"],
-            discount_percentage=membership_data["discount_percentage"],
-            description=membership_data["description"],
-        )
-        db.add(membership_type)
-        db.commit()
-        db.refresh(membership_type)
-
-        for benefit_text in membership_data["benefits"]:
-            db.add(
-                MembershipBenefit(
-                    membership_type_id=membership_type.id,
-                    benefit=benefit_text,
-                )
-            )
-        db.commit()
+    membership_service.ensure_default_membership_types(db)
 
     for voucher_data in DEFAULT_VOUCHERS:
         existing = db.query(Voucher).filter(Voucher.code == voucher_data["code"]).first()
