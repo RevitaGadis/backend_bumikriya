@@ -5,6 +5,7 @@ from app.models.role import Role
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.services import membership_service
+from app.services.notification_service import create_admin_notifications
 
 def get_user_by_id(db: Session, user_id: str):
     return db.query(User).filter(User.id == user_id).first()
@@ -33,6 +34,15 @@ def create_user_with_password(db: Session, name: str, email: str, hashed_passwor
     db.commit()
     db.refresh(db_user)
     membership_service.ensure_user_membership(db, db_user)
+    if role_name != "admin":
+        create_admin_notifications(
+            db=db,
+            title="Akun Baru Terdaftar",
+            message=f"Pengguna baru {name} ({email}) telah mendaftar",
+            notification_type="registration",
+            reference_type="user",
+            reference_id=db_user.id,
+        )
     return db_user
 
 def create_oauth_user(db: Session, email: str, name: str, role_name: str = "user"):

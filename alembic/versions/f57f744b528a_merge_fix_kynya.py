@@ -1,8 +1,8 @@
-"""merge migration heads
+"""merge fix kynya
 
-Revision ID: bcdeb2354033
-Revises: 14a047d5f41a, a177e2fb3ecb
-Create Date: 2026-08-13 08:50:56.266100
+Revision ID: f57f744b528a
+Revises: b8c9d1e2f3a4, e1f2a3b4c5d6
+Create Date: 2026-08-15 21:43:17.547444
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'bcdeb2354033'
-down_revision: Union[str, Sequence[str], None] = ('14a047d5f41a', 'a177e2fb3ecb')
+revision: str = 'f57f744b528a'
+down_revision: Union[str, Sequence[str], None] = ('b8c9d1e2f3a4', 'e1f2a3b4c5d6')
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

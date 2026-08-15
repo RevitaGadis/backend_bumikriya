@@ -151,3 +151,7 @@ class StoreReviewItem(BaseModel):
 class StoreReviewListResponse(BaseModel):
     data: List[StoreReviewItem] = []
     pagination: StorePagination
+
+class StoreWithRating(StoreInDBBase):
+    average_rating: float = 0.0
+    review_count: int = 0

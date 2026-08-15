@@ -9,7 +9,7 @@ from typing import Sequence, Union
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'bcdeb2354033'
+revision: str = 'e1f2a3b4c5d6'
 down_revision: Union[str, Sequence[str], None] = 'b2c3d4e5f6a7'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

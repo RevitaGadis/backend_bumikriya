@@ -9,13 +9,27 @@ class ReviewCreate(BaseModel):
     comment: Optional[str] = None
 
 
-class Review(BaseModel):
+class ReviewUserInfo(BaseModel):
     id: str
-    product_id: str
-    user_id: str
-    rating: int
-    comment: Optional[str] = None
-    created_at: datetime
+    name: str
+    photoprofil: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+
+class Review(BaseModel):
+    id: str
+    product_id: str
+    rating: int
+    comment: Optional[str] = None
+    created_at: datetime
+    user: ReviewUserInfo
+
+    class Config:
+        from_attributes = True
+
+
+class ProductRatingSummary(BaseModel):
+    average_rating: float
+    review_count: int

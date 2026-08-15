@@ -14,6 +14,8 @@ from app.models.order_item import OrderItem
 from app.models.wishlist import Wishlist
 from app.schemas.store import StoreUpdate
 from app.schemas.dashboard import OrderStatus
+from app.models.review import Review
+from app.models.product import Product
 
 
 def get_store_by_user(db: Session, user_id: str) -> Optional[Store]:
@@ -249,3 +251,18 @@ def update_store(db: Session, user_id: str, store_in: StoreUpdate) -> Optional[S
     db.commit()
     db.refresh(db_store)
     return db_store
+
+def get_store_rating_summary(db: Session, seller_id: str) -> dict:
+    result = (
+        db.query(
+            func.avg(Review.rating).label("avg_rating"),
+            func.count(Review.id).label("review_count"),
+        )
+        .join(Product, Product.id == Review.product_id)
+        .filter(Product.seller_id == seller_id)
+        .first()
+    )
+    return {
+        "average_rating": round(float(result.avg_rating), 1) if result.avg_rating else 0.0,
+        "review_count": result.review_count or 0,
+    }

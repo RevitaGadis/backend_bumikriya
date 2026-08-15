@@ -15,6 +15,7 @@ from app.models.store_follow import StoreFollow
 from app.models.transaction import Transaction
 from app.models.membership import MembershipType, UserMembership, MembershipBenefit
 from app.models.voucher import Voucher
+from app.models.review import Review
 
 __all__ = [
     "Cart",
@@ -36,4 +37,5 @@ __all__ = [
     "UserMembership",
     "MembershipBenefit",
     "Voucher",
+    "Review",
 ]

@@ -10,6 +10,8 @@ from app.schemas.store import Store, StoreUpdate
 from app.schemas.voucher import Voucher
 from app.core.uploads import save_upload
 from app.models.user import User
+from app.schemas.store import StoreWithRating
+from app.models.store import Store as StoreModel
 
 router = APIRouter()
 
@@ -236,3 +238,18 @@ def seller_dashboard_summary(
 ) -> Any:
     """Ringkasan performa toko. (Seller only)"""
     return order_service.get_seller_dashboard_summary(db, current_seller.id)
+
+
+@router.get("/store/{store_id}", response_model=StoreWithRating)
+def read_store_public(store_id: str, db: Session = Depends(deps.get_db)) -> Any:
+    """Lihat profil toko + rating rata-rata. (Public)"""
+    store = db.query(StoreModel).filter(StoreModel.id == store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+    rating = store_service.get_store_rating_summary(db, store.user_id)
+    return StoreWithRating(
+        id=store.id, user_id=store.user_id, store_name=store.store_name,
+        description=store.description, logo=store.logo, address=store.address,
+        is_approved=store.is_approved, created_at=store.created_at,
+        average_rating=rating["average_rating"], review_count=rating["review_count"],
+    )

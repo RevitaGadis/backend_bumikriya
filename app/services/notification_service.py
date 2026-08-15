@@ -1,9 +1,12 @@
 from datetime import datetime
 from typing import List, Optional
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.notification import Notification
+from app.models.role import Role
+from app.models.user import User
 from app.schemas.notification import NotificationCreate
 from app.services.ws_manager import publish_notification_sync
 
@@ -72,6 +75,39 @@ def mark_all_as_read(db: Session, user_id: str) -> int:
     )
     db.commit()
     return updated
+
+
+def get_admin_users(db: Session) -> List[User]:
+    return (
+        db.query(User)
+        .filter(or_(User.is_admin.is_(True), User.role.has(Role.name == "admin")))
+        .all()
+    )
+
+
+def create_admin_notifications(
+    db: Session,
+    title: str,
+    message: Optional[str] = None,
+    notification_type: str = "general",
+    reference_type: Optional[str] = None,
+    reference_id: Optional[str] = None,
+) -> List[Notification]:
+    """Create a notification for every admin user."""
+    created: List[Notification] = []
+    for admin in get_admin_users(db):
+        created.append(
+            create_notification(
+                db=db,
+                user_id=admin.id,
+                title=title,
+                message=message,
+                notification_type=notification_type,
+                reference_type=reference_type,
+                reference_id=reference_id,
+            )
+        )
+    return created
 
 
 def create_notification(
