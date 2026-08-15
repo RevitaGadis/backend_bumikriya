@@ -39,7 +39,6 @@ def get_current_user(
     if not token and request and "access_token" in request.cookies:
         token = request.cookies["access_token"]
     
-    # If still no token, raise exception
     if not token:
         raise credentials_exception
 
