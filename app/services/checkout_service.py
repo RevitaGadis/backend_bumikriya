@@ -11,11 +11,13 @@ from app.models.payment import Payment
 from app.models.cart import Cart
 from app.models.product import Product
 from app.models.voucher import Voucher
+from app.models.user import User
 from app.schemas.checkout import CheckoutRequest
 from app.schemas.dashboard import OrderStatus, PaymentStatus
 
 
 from app.services import membership_service
+from app.services.notification_service import create_admin_notifications, create_notification
 
 def _generate_order_number() -> str:
     return f"ORD-{uuid.uuid4().hex[:10].upper()}"
@@ -101,6 +103,7 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
     db.add(db_order)
     db.flush()
 
+    seller_items = {}
     for cart_item in cart.items:
         product = db.query(Product).filter(Product.id == cart_item.product_id).first()
         db.add(OrderItem(
@@ -112,6 +115,9 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
             subtotal=cart_item.subtotal,  # asumsi field ini ada di CartItem
         ))
         product.stock -= cart_item.quantity
+        seller_items.setdefault(product.seller_id, []).append(
+            (product.name, cart_item.quantity)
+        )
 
     db.add(Payment(
         order_id=db_order.id,
@@ -128,6 +134,40 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
 
     db.commit()
     db.refresh(db_order)
+
+    buyer = db.query(User).filter(User.id == user_id).first()
+    buyer_name = buyer.name if buyer else "Pelanggan"
+    item_desc = ", ".join(
+        f"{item.product_name} x{item.quantity}" for item in db_order.items
+    )
+    create_admin_notifications(
+        db=db,
+        title="Pesanan Baru",
+        message=(
+            f"Pesanan baru {db_order.order_number} dari {buyer_name}: "
+            f"{item_desc}. Total Rp {int(total_amount):,}"
+        ),
+        notification_type="order",
+        reference_type="order",
+        reference_id=db_order.id,
+    )
+
+    for seller_id, items in seller_items.items():
+        seller_lines = ", ".join(
+            f"{name} x{qty}" for name, qty in items
+        )
+        create_notification(
+            db=db,
+            user_id=seller_id,
+            title="Pesanan Baru",
+            message=(
+                f"Ada pesanan masuk {db_order.order_number} dari {buyer_name}: "
+                f"{seller_lines}. Total Rp {int(total_amount):,}"
+            ),
+            notification_type="order",
+            reference_type="order",
+            reference_id=db_order.id,
+        )
 
     membership_service.add_spending(
         db, user_id, float(total_amount)
