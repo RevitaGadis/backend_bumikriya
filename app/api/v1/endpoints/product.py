@@ -9,6 +9,9 @@ from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductDe
 from app.core.uploads import save_upload
 from app.models.user import User
 from app.models.store import Store
+from app.services import review_service
+from app.schemas.review import Review, ReviewCreate
+
 
 router = APIRouter()
 
@@ -204,3 +207,19 @@ def delete_product(
             detail="Product not found",
         )
     return {"message": "Product deleted successfully"}
+
+@router.get("/{product_id}/reviews", response_model=List[Review])
+def read_product_reviews(product_id: str, db: Session = Depends(deps.get_db)) -> Any:
+    """List review produk. (Public)"""
+    return review_service.get_reviews_by_product(db, product_id)
+
+
+@router.post("/{product_id}/reviews", response_model=Review, status_code=201)
+def create_product_review(
+    product_id: str,
+    review_in: ReviewCreate,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Kasih review produk (harus sudah beli & selesai). (Buyer)"""
+    return review_service.create_review(db, current_user.id, review_in)

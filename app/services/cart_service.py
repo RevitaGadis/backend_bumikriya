@@ -26,6 +26,8 @@ def add_item(db: Session, user_id: str, product_id: str, quantity: int) -> Cart:
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product or not product.is_active:
         raise HTTPException(status_code=404, detail="Produk tidak ditemukan atau tidak aktif")
+    if product.seller_id == user_id:
+        raise HTTPException(status_code=400, detail="Tidak bisa membeli produk milik toko sendiri")
     if quantity > product.stock:
         raise HTTPException(status_code=400, detail=f"Stok {product.name} tidak cukup (tersisa {product.stock})")
 
