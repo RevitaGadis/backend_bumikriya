@@ -49,9 +49,5 @@ typing_extensions==4.16.0
 urllib3==2.7.0
 uvicorn==0.52.1
 watchfiles==1.2.0
-<<<<<<< HEAD
-websockets==17.0.1
-=======
 resend
 websockets==17.0.1
->>>>>>> 6906e6475b2f7f0fb276ee3b9cd7e137bcbf708e
