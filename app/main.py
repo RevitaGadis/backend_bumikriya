@@ -9,7 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.api.v1.endpoints import auth, checkout, home, category, admin, seller, user, product, order, wishlist, cart, notification,payment, stores, voucher, review
+from app.api.v1.endpoints import auth, checkout, home, category, admin, seller, user, product, order, wishlist, cart, notification,payment, stores, voucher, review, recipe
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -76,6 +76,7 @@ app.include_router(notification.ws_router)
 app.include_router(payment.router, prefix="/payments", tags=["Payments"])
 app.include_router(voucher.router,    prefix="/api/v1/vouchers",   tags=["Vouchers"])
 app.include_router(review.router, prefix="/api/v1", tags=["Reviews"])
+app.include_router(recipe.router, prefix="/recipes", tags=["Recipes"])
 
 @app.get("/")
 async def root():

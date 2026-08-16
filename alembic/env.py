@@ -32,6 +32,7 @@ from app.models.membership import MembershipType, UserMembership, MembershipBene
 from app.models.voucher import Voucher
 from app.models.store_follow import StoreFollow
 from app.models.review import Review
+from app.models.recipe import Recipe, RecipeMaterial
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

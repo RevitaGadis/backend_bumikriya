@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column("id", sa.String(length=36), nullable=False),
         sa.Column("product_id", sa.String(length=36), nullable=False),
         sa.Column("user_id", sa.String(length=36), nullable=False),
-        sa.Column("order_item_id", sa.String(length=36), nullable=False),
+        sa.Column("order_item_id", sa.BigInteger(), nullable=False),
         sa.Column("rating", sa.Integer(), nullable=False),
         sa.Column("comment", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
@@ -33,10 +33,13 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["user_id"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("order_item_id"),
+        sa.ForeignKeyConstraint(["order_item_id"],["order_items.id"]
+),
     )
     op.create_index(op.f("ix_reviews_id"), "reviews", ["id"], unique=False)
     op.create_index(op.f("ix_reviews_product_id"), "reviews", ["product_id"], unique=False)
     op.create_index(op.f("ix_reviews_user_id"), "reviews", ["user_id"], unique=False)
+    
 
 
 def downgrade() -> None:

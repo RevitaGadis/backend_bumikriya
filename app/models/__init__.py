@@ -16,6 +16,7 @@ from app.models.transaction import Transaction
 from app.models.membership import MembershipType, UserMembership, MembershipBenefit
 from app.models.voucher import Voucher
 from app.models.review import Review
+from app.models.recipe import Recipe, RecipeMaterial
 
 __all__ = [
     "Cart",
@@ -38,4 +39,6 @@ __all__ = [
     "MembershipBenefit",
     "Voucher",
     "Review",
+    "Recipe",
+    "RecipeMaterial",
 ]
