@@ -5,9 +5,15 @@ from pydantic import BaseModel
 
 class StoreBase(BaseModel):
     store_name: str
+    tagline: Optional[str] = None
     description: Optional[str] = None
     logo: Optional[str] = None
+    banner: Optional[str] = None
     address: Optional[str] = None
+    shipping_policy: Optional[str] = None
+    return_policy: Optional[str] = None
+    custom_policy: Optional[str] = None
+    tags: Optional[str] = None
 
 
 class StoreCreate(StoreBase):
@@ -16,9 +22,15 @@ class StoreCreate(StoreBase):
 
 class StoreUpdate(BaseModel):
     store_name: Optional[str] = None
+    tagline: Optional[str] = None
     description: Optional[str] = None
     logo: Optional[str] = None
+    banner: Optional[str] = None
     address: Optional[str] = None
+    shipping_policy: Optional[str] = None
+    return_policy: Optional[str] = None
+    custom_policy: Optional[str] = None
+    tags: Optional[str] = None
 
 
 class StoreInDBBase(StoreBase):

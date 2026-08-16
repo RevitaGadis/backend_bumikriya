@@ -246,6 +246,8 @@ def update_store(db: Session, user_id: str, store_in: StoreUpdate) -> Optional[S
         return None
     update_data = store_in.model_dump(exclude_unset=True)
     for key, value in update_data.items():
+        if value is None:
+            continue
         setattr(db_store, key, value)
     db.add(db_store)
     db.commit()

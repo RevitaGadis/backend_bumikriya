@@ -53,10 +53,42 @@ def read_my_store(
 def update_my_store(
     *,
     db: Session = Depends(deps.get_db),
-    store_in: StoreUpdate,
+    store_name: Optional[str] = Form(None),
+    tagline: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    address: Optional[str] = Form(None),
+    shipping_policy: Optional[str] = Form(None),
+    return_policy: Optional[str] = Form(None),
+    custom_policy: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),
+    logo_url: Optional[str] = Form(None),
+    banner_url: Optional[str] = Form(None),
+    logo: Optional[UploadFile] = File(None),
+    banner: Optional[UploadFile] = File(None),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
     """Update data toko sendiri. (Seller only)"""
+    store_in = StoreUpdate(
+        store_name=store_name,
+        tagline=tagline,
+        description=description,
+        address=address,
+        shipping_policy=shipping_policy,
+        return_policy=return_policy,
+        custom_policy=custom_policy,
+        tags=tags,
+    )
+
+    if logo and logo.filename:
+        store_in.logo = save_upload(logo, subdir="stores")
+    elif logo_url:
+        store_in.logo = logo_url
+
+    if banner and banner.filename:
+        store_in.banner = save_upload(banner, subdir="stores")
+    elif banner_url:
+        store_in.banner = banner_url
+
     store = store_service.update_store(db, current_seller.id, store_in)
     if not store:
         raise HTTPException(status_code=404, detail="Store not found")
