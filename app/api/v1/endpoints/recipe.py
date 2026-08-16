@@ -4,11 +4,9 @@ from sqlalchemy.orm import Session
 
 from app.api import deps
 from app.services import recipe_service
-from app.schemas.recipe import RecipeSummary, RecipeDetail, RecipeCreate, RecipeUpdate, RecipeMaterialOut
+from app.schemas.recipe import RecipeSummary, RecipeDetail, RecipeCreate, RecipeUpdate, RecipeMaterialOut, ProductBrief
 from app.models.user import User
-from app.schemas.recipe import RecipeSummary
 from pydantic import BaseModel
-from typing import List
 
 router = APIRouter()
 
