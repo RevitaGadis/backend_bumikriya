@@ -1,7 +1,7 @@
 from datetime import datetime, time, timedelta
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.order import Order
 from app.models.order_item import OrderItem
@@ -80,8 +80,20 @@ def get_admin_dashboard(db: Session):
         for seller, total_orders, total_products_sold, total_revenue in top_seller_rows
     ]
 
-    recent_orders = db.query(Order).order_by(Order.created_at.desc(), Order.id.desc()).limit(10).all()
-
+    recent_orders = (
+            db.query(Order)
+            .options(
+                joinedload(Order.user),
+                joinedload(Order.items)
+                .joinedload(OrderItem.product)
+                .joinedload(Product.seller)
+                .joinedload(User.store),
+            )
+            .order_by(Order.created_at.desc(), Order.id.desc())
+            .limit(10)
+            .all()
+        )
+    
     latest_orders = []
     for order in recent_orders:
         seller_name = "Penjual"
@@ -89,17 +101,16 @@ def get_admin_dashboard(db: Session):
             if item.product and item.product.seller:
                 seller_name = _seller_display_name(item.product.seller)
                 break
-
-        latest_orders.append(
-            {
+    
+            latest_orders.append({
                 "order_id": order.order_number,
                 "customer_name": order.user.name if order.user else "Customer",
                 "seller_name": seller_name,
                 "total_amount": int(order.total_amount or 0),
-                "status": STATUS_LABELS.get(order.status, order.status.value if order.status else ""),
+                "status": STATUS_LABELS.get(order.status, (order.status.value, order.status.value))[0]
+                    if order.status else "",
                 "created_at": order.created_at.isoformat() if order.created_at else None,
-            }
-        )
+            })
 
     return {
         "summary": summary,

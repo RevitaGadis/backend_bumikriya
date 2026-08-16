@@ -8,9 +8,9 @@ from fastapi import HTTPException, status
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.payment import Payment
-from app.models.cart import Cart
+from app.models.cart import Cart, CartItem
 from app.models.product import Product
-from app.models.voucher import Voucher
+from app.models.voucher import Voucher, UserVoucher
 from app.models.user import User
 from app.schemas.checkout import CheckoutRequest
 from app.schemas.dashboard import OrderStatus, PaymentStatus
@@ -40,7 +40,6 @@ def _voucher_available(voucher: Voucher) -> Optional[str]:
 
 
 def apply_voucher(db: Session, code: str, subtotal: Decimal) -> Decimal:
-    """Validasi voucher & hitung besar diskon. Raise HTTPException jika tidak valid."""
     voucher = db.query(Voucher).filter(Voucher.code == code).first()
     if not voucher:
         raise HTTPException(status_code=400, detail="Voucher tidak ditemukan")
@@ -74,13 +73,14 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
     if not selected_items:
         raise HTTPException(status_code=400, detail="Tidak ada item yang dipilih")
 
-    # validasi stok — cuma buat item yang dipilih
+    products_by_id = {}
     for cart_item in selected_items:
         product = db.query(Product).filter(Product.id == cart_item.product_id).first()
         if not product or not product.is_active:
             raise HTTPException(status_code=400, detail="Produk tidak tersedia")
         if product.stock < cart_item.quantity:
             raise HTTPException(status_code=400, detail=f"Stok {product.name} tidak cukup")
+        products_by_id[cart_item.product_id] = product
 
     subtotal = sum(Decimal(str(item.subtotal)) for item in selected_items)
     shipping_cost = Decimal(str(data.shipping_cost))
@@ -108,8 +108,8 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
     db.flush()
 
     seller_items = {}
-    for cart_item in cart.items:
-        product = db.query(Product).filter(Product.id == cart_item.product_id).first()
+    for cart_item in selected_items:                  
+        product = products_by_id[cart_item.product_id]
         db.add(OrderItem(
             order_id=db_order.id,
             product_id=cart_item.product_id,
@@ -133,8 +133,6 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
     if voucher:
         voucher.used_count += 1
         db.add(voucher)
-        # Tandai voucher hadiah keanggotaan milik buyer sebagai sudah dipakai.
-        from app.models.voucher import UserVoucher
         user_voucher = (
             db.query(UserVoucher)
             .filter(
@@ -148,6 +146,10 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
             user_voucher.is_claimed = True
             user_voucher.claimed_at = datetime.utcnow()
             db.add(user_voucher)
+
+    db.query(CartItem).filter(
+        CartItem.id.in_([item.id for item in selected_items])
+    ).delete(synchronize_session=False)
 
     db.commit()
     db.refresh(db_order)
@@ -170,9 +172,7 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
     )
 
     for seller_id, items in seller_items.items():
-        seller_lines = ", ".join(
-            f"{name} x{qty}" for name, qty in items
-        )
+        seller_lines = ", ".join(f"{name} x{qty}" for name, qty in items)
         create_notification(
             db=db,
             user_id=seller_id,
@@ -186,8 +186,6 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
             reference_id=db_order.id,
         )
 
-    membership_service.add_spending(
-        db, user_id, float(total_amount)
-    )
+    membership_service.add_spending(db, user_id, float(total_amount))
 
     return db_order

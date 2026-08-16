@@ -58,8 +58,6 @@ def delete_product(db: Session, product_id: str) -> bool:
     return True
 
 
-# --- khusus seller (ownership-scoped) ---
-
 def get_products_by_seller(db: Session, seller_id: str, skip: int = 0, limit: int = 100) -> List[Product]:
     return db.query(Product).filter(Product.seller_id == seller_id).offset(skip).limit(limit).all()
 

@@ -5,8 +5,6 @@ from fastapi import HTTPException
 from app.models.recipe import Recipe, RecipeMaterial
 from app.models.product import Product
 from app.schemas.recipe import RecipeCreate, RecipeUpdate
-from app.models.store import Store
-from app.services import store_service
 
 
 def get_recipes(db: Session, search: Optional[str] = None, skip: int = 0, limit: int = 100) -> List[Recipe]:
@@ -102,35 +100,3 @@ def delete_recipe(db: Session, recipe_id: str) -> bool:
     db.delete(db_recipe)
     db.commit()
     return True
-
-def search_all(db: Session, keyword: str, limit: int = 10) -> dict:
-    products = (
-        db.query(Product)
-        .filter(Product.is_active.is_(True), Product.name.ilike(f"%{keyword}%"))
-        .limit(limit)
-        .all()
-    )
-    recipes = (
-        db.query(Recipe)
-        .filter(Recipe.title.ilike(f"%{keyword}%"))
-        .limit(limit)
-        .all()
-    )
-    stores = (
-        db.query(Store)
-        .filter(Store.is_approved.is_(True), Store.store_name.ilike(f"%{keyword}%"))
-        .limit(limit)
-        .all()
-    )
-
-    stores_out = []
-    for store in stores:
-        rating = store_service.get_store_rating_summary(db, store.user_id)
-        stores_out.append({
-            "id": store.id,
-            "store_name": store.store_name,
-            "logo": store.logo,
-            "average_rating": rating["average_rating"],
-        })
-
-    return {"products": products, "recipes": recipes, "stores": stores_out}

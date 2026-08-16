@@ -173,7 +173,7 @@ def match_membership_type(
     return None
 
 
-def _resolve_current_level(types: List[MembershipType], spending: float) -> Optional[MembershipType]:
+def resolve_current_level(types: List[MembershipType], spending: float) -> Optional[MembershipType]:
     current = None
     for t in types:
         if spending >= t.min_spending:
@@ -189,7 +189,7 @@ def recalc_user_membership(db: Session, user) -> UserMembership:
     um = ensure_user_membership(db, user)
     types = get_membership_types(db)
     spending = float(um.total_spending or 0)
-    current = _resolve_current_level(types, spending)
+    current = resolve_current_level(types, spending)
     if current is not None:
         um.membership_type_id = current.id
     sync_user_member_type(db, user)
@@ -199,20 +199,17 @@ def recalc_user_membership(db: Session, user) -> UserMembership:
 
 
 def sync_user_member_type(db: Session, user) -> None:
-    """Samakan kolom member_type di tabel users dengan level terbaru
-    agar endpoint lain (mis. /me) tidak menampilkan level lama yang statis."""
     types = get_membership_types(db)
     um = (
         db.query(UserMembership).filter(UserMembership.user_id == user.id).first()
     )
     spending = float(um.total_spending or 0) if um is not None else 0
-    current = _resolve_current_level(types, spending)
+    current = resolve_current_level(types, spending)
     if current is not None and getattr(user, "member_type", None) != current.name:
         user.member_type = current.name
 
 
 def _issue_level_up_reward(db: Session, user: User, new_level_code: str) -> Optional[UserVoucher]:
-    """Terbitkan voucher hadiah saat user naik level (sekali per level)."""
     types = get_membership_types(db)
     member_type = None
     for t in types:
@@ -303,7 +300,7 @@ def add_spending(db: Session, user_id: str, amount: float) -> UserMembership:
 
     types = get_membership_types(db)
     spending = float(um.total_spending or 0)
-    new_level = _resolve_current_level(types, spending)
+    new_level = resolve_current_level(types, spending)
 
     promoted = (
         new_level is not None
@@ -357,11 +354,8 @@ def get_membership_view(db: Session, user) -> Optional[dict]:
 
     spending = float(um.total_spending or 0)
 
-    # Penting: level ditentukan dari total belanja aktual (bukan kolom
-    # statis member_type) supaya status keanggotaan ikut naik setelah
-    # progres terpenuhi.
     sync_user_member_type(db, user)
-    current = _resolve_current_level(types, spending)
+    current = resolve_current_level(types, spending)
     if current is None:
         return None
 
@@ -404,7 +398,6 @@ def get_membership_view(db: Session, user) -> Optional[dict]:
 
 
 def _get_reward_voucher(db: Session, user) -> Optional[dict]:
-    """Kembalikan voucher hadiah yang belum diklaim (dipakai) untuk user."""
     user_voucher = (
         db.query(UserVoucher)
         .filter(

@@ -23,7 +23,7 @@ def get_or_create_cart(db: Session, user_id: str) -> Cart:
 
 def add_item(db: Session, user_id: str, product_id: str, quantity: int) -> Cart:
     cart = get_or_create_cart(db, user_id)
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = db.query(Product).filter(Product.id == product_id).with_for_update().first()
     if not product or not product.is_active:
         raise HTTPException(status_code=404, detail="Produk tidak ditemukan atau tidak aktif")
     if product.seller_id == user_id:

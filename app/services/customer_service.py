@@ -1,5 +1,6 @@
 import math
 from datetime import datetime, timedelta
+from typing import Any, Optional
 
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -7,37 +8,16 @@ from sqlalchemy.orm import Session
 from app.models.order import Order
 from app.models.user import User
 from app.schemas.dashboard import OrderStatus
-from typing import Any, Optional
+from app.services import membership_service
 
-
-def _membership_for(total_spent: float, member_type=None):
-    from app.services.membership_service import _normalize_key
-
+def _membership_display(db: Session, total_spent: float, member_type=None) -> str:
+    types = membership_service.get_membership_types(db)
     if member_type:
-        key = _normalize_key(member_type)
-        mapping = {
-            "regular": "Bronze Member",
-            "regularmember": "Bronze Member",
-            "basic": "Bronze Member",
-            "basicmember": "Bronze Member",
-            "bronze": "Bronze Member",
-            "bronzemember": "Bronze Member",
-            "silver": "Silver Member",
-            "silvermember": "Silver Member",
-            "gold": "Gold Member",
-            "goldmember": "Gold Member",
-            "platinum": "Platinum Member",
-            "platinummember": "Platinum Member",
-        }
-        return mapping.get(key, member_type)
-    if total_spent >= 3000000:
-        return "Platinum Member"
-    if total_spent >= 1000000:
-        return "Gold Member"
-    if total_spent >= 500000:
-        return "Silver Member"
-    return "Bronze Member"
-
+        matched = membership_service.match_membership_type(types, member_type)
+        if matched:
+            return matched.name
+    current = membership_service._resolve_current_level(types, total_spent)
+    return current.name if current else "Bronze Member"
 
 def _initial_for(name: str) -> str:
     if not name:
@@ -104,7 +84,7 @@ def get_customers(
             "total_orders": int(total_orders or 0),
             "total_spent": float(total_spent or 0),
             "status": "active",
-            "membership": _membership_for(float(total_spent or 0), user.member_type),
+            "membership": _membership_display(db, float(total_spent or 0), user.member_type),
         }
         for user, total_orders, total_spent in rows
     ]
@@ -125,7 +105,7 @@ def get_customers(
             "name": user.name,
             "email": user.email,
             "avatar": user.photoprofil,
-            "membership": _membership_for(float(total_spent or 0), user.member_type),
+            "membership": _membership_display(db, float(total_spent or 0), user.member_type),
             "total_spent": float(total_spent or 0),
             "total_orders": int(total_orders or 0),
         }
@@ -205,7 +185,7 @@ def get_customer_detail(db: Session, customer_id: str) -> Optional[dict]:
     total_orders = len(active_orders)
     average_order_value = total_spent / total_orders if total_orders > 0 else 0.0
 
-    membership_name = _membership_for(total_spent, user.member_type)
+    membership_name = _membership_display(total_spent, user.member_type)
     if not membership_name.lower().endswith("member"):
         membership_display_name = f"{membership_name} Member"
     else:
@@ -263,8 +243,9 @@ def update_customer(db: Session, customer_id: str, data: dict) -> Optional[dict]
         user.name = data["name"]
     if "email" in data:
         existing = db.query(User).filter(User.email == data["email"], User.id != customer_id).first()
-        if not existing:
-            user.email = data["email"]
+        if existing:
+            raise ValueError("Email sudah digunakan")
+        user.email = data["email"]
     if "phone" in data:
         user.phone = data["phone"]
     if "address" in data:
@@ -284,7 +265,7 @@ def update_customer(db: Session, customer_id: str, data: dict) -> Optional[dict]
         "email": user.email,
         "phone": user.phone,
         "address": user.address,
-        "avatar": user.photoprofil
+        "avatar": user.photoprofil,
     }
 
 

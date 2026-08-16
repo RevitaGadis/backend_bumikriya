@@ -1,19 +1,33 @@
 import asyncio
 import json
 import logging
+from datetime import datetime
 from typing import Dict, Optional, Set
 
 from fastapi import WebSocket
-from redis import Redis as SyncRedis
+from redis import Redis as SyncRedis, ConnectionPool as SyncConnectionPool
 from redis.asyncio import Redis as AsyncRedis
 
 from app.core.config import settings
-from app.core.redis_mock import RedisMock
 
 logger = logging.getLogger(__name__)
 
 NOTIFICATION_CHANNEL = "notifications"
 
+# FIX: connection pool dipakai ulang, bukan bikin koneksi baru tiap publish
+_sync_redis_pool: Optional[SyncConnectionPool] = None
+
+
+def _get_sync_redis_pool() -> SyncConnectionPool:
+    global _sync_redis_pool
+    if _sync_redis_pool is None:
+        _sync_redis_pool = SyncConnectionPool(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            password=settings.REDIS_PASSWORD or None,
+            max_connections=10,
+        )
+    return _sync_redis_pool
 
 class ConnectionManager:
     """Tracks live WebSocket connections per user and broadcasts via Redis pub/sub."""
@@ -92,7 +106,6 @@ class ConnectionManager:
                 logger.warning("Notification pub/sub listener error, retrying in 3s...")
                 await asyncio.sleep(3)
 
-
 manager = ConnectionManager()
 
 
@@ -101,32 +114,21 @@ def _serialize_publish(user_id: str, payload: dict) -> str:
 
 
 def publish_notification_sync(user_id: str, payload: dict) -> None:
-    """Publish a notification so all app instances deliver it to the user in realtime.
-
-    Uses Redis pub/sub when available; otherwise delivers directly to in-process
-    WebSocket connections (e.g. the RedisMock fallback).
-    """
     if manager._redis_available:
         try:
-            client = SyncRedis(
-                host=settings.REDIS_HOST,
-                port=settings.REDIS_PORT,
-                password=settings.REDIS_PASSWORD or None,
-            )
+            client = SyncRedis(connection_pool=_get_sync_redis_pool())
             client.publish(NOTIFICATION_CHANNEL, _serialize_publish(user_id, payload))
-            client.close()
             return
         except Exception:
-            pass
+            logger.warning("Gagal publish notifikasi ke Redis, fallback in-process", exc_info=True)
 
-    # In-process fallback (no Redis / listener not running).
     if manager._loop is not None and manager.has_connection(user_id):
         try:
             asyncio.run_coroutine_threadsafe(
                 manager.send_to_user(user_id, payload), manager._loop
             )
         except Exception:
-            pass
+            logger.warning("Gagal kirim notifikasi in-process", exc_info=True)
 
 
 def notify_user(
@@ -137,7 +139,6 @@ def notify_user(
     reference_type: Optional[str] = None,
     reference_id: Optional[str] = None,
 ) -> None:
-    """Build a realtime payload and push it to the user without touching the DB."""
     payload = {
         "event": "notification",
         "data": {
@@ -146,7 +147,7 @@ def notify_user(
             "message": message,
             "reference_type": reference_type,
             "reference_id": str(reference_id) if reference_id else None,
-            "created_at": None,
+            "created_at": datetime.utcnow().isoformat(),   # FIX: dulu hardcoded None
         },
     }
     publish_notification_sync(user_id, payload)

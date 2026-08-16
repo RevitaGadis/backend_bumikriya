@@ -220,7 +220,6 @@ def get_orders_for_seller(
     skip: int = 0,
     limit: int = 100,
 ) -> List[dict]:
-    """List order yang mengandung minimal satu produk milik seller. (Seller only)"""
     orders = (
         _seller_orders_query(db, seller_id)
         .order_by(Order.created_at.desc())
@@ -268,7 +267,6 @@ def update_seller_order_status(
     seller_id: str,
     status: OrderStatus,
 ) -> Optional[Order]:
-    """Update status order hanya jika berisi minimal satu produk milik seller."""
     order = (
         _seller_orders_query(db, seller_id)
         .filter(Order.id == order_id)
@@ -298,7 +296,6 @@ def update_seller_order_status(
 
 
 def get_seller_dashboard_summary(db: Session, seller_id: str) -> dict:
-    """Ringkasan performa toko milik seller. (Seller only)"""
     today = datetime.now().date()
     today_start = datetime.combine(today, time.min)
     tomorrow_start = today_start + timedelta(days=1)
