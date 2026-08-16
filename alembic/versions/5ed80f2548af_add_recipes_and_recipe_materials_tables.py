@@ -1,7 +1,7 @@
 """add recipes and recipe_materials tables
 
 Revision ID: 5ed80f2548af
-Revises: f4e5d6c7b8a9
+Revises: c9a7b3d5e8f1
 Create Date: 2026-08-16 16:20:16.558367
 
 """
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "5ed80f2548af"
-down_revision: Union[str, Sequence[str], None] = "f4e5d6c7b8a9"
+down_revision: Union[str, Sequence[str], None] = "c9a7b3d5e8f1"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
