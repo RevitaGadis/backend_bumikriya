@@ -114,6 +114,7 @@ def create_seller_product(
     db: Session = Depends(deps.get_db),
     name: str = Form(...),
     price: float = Form(...),
+    description: Optional[str] = Form(None),
     color: str = Form(...),
     material: str = Form(...),
     fits: str = Form(...),
@@ -128,6 +129,7 @@ def create_seller_product(
     product_in = ProductCreate(
         name=name,
         price=price,
+        description=description,
         image=image_path,
         color=color,
         material=material,
@@ -147,6 +149,7 @@ async def update_seller_product(
     db: Session = Depends(deps.get_db),
     name: Optional[str] = Form(None),
     price: Optional[float] = Form(None),
+    description: Optional[str] = Form(None),
     color: Optional[str] = Form(None),
     material: Optional[str] = Form(None),
     fits: Optional[str] = Form(None),
@@ -161,6 +164,8 @@ async def update_seller_product(
         update_data["name"] = name
     if price is not None:
         update_data["price"] = price
+    if description is not None:
+        update_data["description"] = description
     if color is not None:
         update_data["color"] = color
     if material is not None:

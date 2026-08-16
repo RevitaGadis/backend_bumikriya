@@ -62,6 +62,7 @@ class ProductDetail(BaseModel):
 
 class ProductBase(BaseModel):
     name: str
+    description: Optional[str] = None
     price: float = 0
     image: str
     color: str
@@ -78,6 +79,7 @@ class ProductCreate(ProductBase):
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
+    description: Optional[str] = None
     price: Optional[float] = None
     image: Optional[str] = None
     color: Optional[str] = None

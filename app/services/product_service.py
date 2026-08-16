@@ -19,6 +19,7 @@ def get_products(db: Session, skip: int = 0, limit: int = 100) -> List[Product]:
 def create_product(db: Session, product: ProductCreate, seller_id: str) -> Product:
     db_product = Product(
         name=product.name,
+        description=product.description,
         price=product.price,
         image=product.image,
         color=product.color,

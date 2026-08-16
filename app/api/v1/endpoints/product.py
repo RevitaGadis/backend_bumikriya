@@ -117,6 +117,7 @@ def create_product(
     db: Session = Depends(deps.get_db),
     name: str = Form(...),
     price: float = Form(...),
+    description: Optional[str] = Form(None),
     color: str = Form(...),
     material: str = Form(...),
     fits: str = Form(...),
@@ -140,6 +141,7 @@ def create_product(
     product_in = ProductCreate(
         name=name,
         price=price,
+        description=description,
         image=image_path,
         color=color,
         material=material,
@@ -158,6 +160,7 @@ def update_product(
     db: Session = Depends(deps.get_db),
     name: Optional[str] = Form(None),
     price: Optional[float] = Form(None),
+    description: Optional[str] = Form(None),
     stock: Optional[int] = Form(None),
     is_active: Optional[bool] = Form(None),
     image: Optional[UploadFile] = File(None),
@@ -178,6 +181,8 @@ def update_product(
         data["name"] = name
     if price is not None:
         data["price"] = price
+    if description is not None:
+        data["description"] = description
     if stock is not None:
         data["stock"] = stock
     if is_active is not None:
