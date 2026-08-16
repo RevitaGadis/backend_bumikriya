@@ -1,4 +1,5 @@
 from typing import List
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.review import Review
@@ -10,6 +11,21 @@ from app.schemas.review import ReviewCreate
 
 def get_reviews_by_product(db: Session, product_id: str) -> List[Review]:
     return db.query(Review).filter(Review.product_id == product_id).order_by(Review.created_at.desc()).all()
+
+
+def get_product_rating_summary(db: Session, product_id: str) -> dict:
+    result = (
+        db.query(
+            func.avg(Review.rating).label("avg_rating"),
+            func.count(Review.id).label("review_count"),
+        )
+        .filter(Review.product_id == product_id)
+        .first()
+    )
+    return {
+        "average_rating": round(float(result.avg_rating), 1) if result.avg_rating else 0.0,
+        "review_count": result.review_count or 0,
+    }
 
 
 def create_review(db: Session, user_id: str, review_in: ReviewCreate) -> Review:
