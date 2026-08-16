@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -9,6 +10,7 @@ from app.models.membership import (
     MembershipBenefit,
 )
 from app.models.user import User
+from app.models.voucher import Voucher, UserVoucher
 
 
 def format_rupiah(amount: float) -> str:
@@ -190,9 +192,93 @@ def recalc_user_membership(db: Session, user) -> UserMembership:
     current = _resolve_current_level(types, spending)
     if current is not None:
         um.membership_type_id = current.id
+    sync_user_member_type(db, user)
     db.commit()
     db.refresh(um)
     return um
+
+
+def sync_user_member_type(db: Session, user) -> None:
+    """Samakan kolom member_type di tabel users dengan level terbaru
+    agar endpoint lain (mis. /me) tidak menampilkan level lama yang statis."""
+    types = get_membership_types(db)
+    um = (
+        db.query(UserMembership).filter(UserMembership.user_id == user.id).first()
+    )
+    spending = float(um.total_spending or 0) if um is not None else 0
+    current = _resolve_current_level(types, spending)
+    if current is not None and getattr(user, "member_type", None) != current.name:
+        user.member_type = current.name
+
+
+def _issue_level_up_reward(db: Session, user: User, new_level_code: str) -> Optional[UserVoucher]:
+    """Terbitkan voucher hadiah saat user naik level (sekali per level)."""
+    types = get_membership_types(db)
+    member_type = None
+    for t in types:
+        if t.code == new_level_code:
+            member_type = t
+            break
+    if member_type is None:
+        return None
+
+    existing = (
+        db.query(UserVoucher)
+        .filter(
+            UserVoucher.user_id == user.id,
+            UserVoucher.level_code == new_level_code,
+        )
+        .first()
+    )
+    if existing is not None:
+        return existing
+
+    discount = float(member_type.discount_percentage or 0)
+    if discount <= 0:
+        discount = 10.0
+
+    code = "REWARD-{}-{}".format(
+        new_level_code.upper(),
+        user.id.replace("-", "")[:8].upper(),
+    )
+    code = code[:50]
+
+    valid_until = datetime.utcnow() + timedelta(days=30)
+
+    try:
+        min_purchase_int = int(round(float(member_type.min_spending or 0)))
+    except (ValueError, TypeError, InvalidOperation):
+        min_purchase_int = 0
+    min_purchase = min(Decimal(str(min_purchase_int)), Decimal("500000"))
+
+    voucher = Voucher(
+        code=code,
+        name="Voucher Hadiah Keanggotaan {}".format(member_type.name),
+        description="Selamat! Kamu naik ke {}. Ini voucher hadiah belanja khusus untukmu.".format(
+            member_type.name
+        ),
+        discount_percent=Decimal(str(discount)),
+        max_discount=Decimal("100000"),
+        min_purchase=min_purchase,
+        quota=1,
+        used_count=0,
+        is_active=True,
+        valid_from=None,
+        valid_until=valid_until,
+        created_by=user.id,
+    )
+    db.add(voucher)
+    db.flush()
+
+    user_voucher = UserVoucher(
+        user_id=user.id,
+        voucher_id=voucher.id,
+        level_code=new_level_code,
+        is_claimed=False,
+    )
+    db.add(user_voucher)
+    db.flush()
+    return user_voucher
 
 
 def add_spending(db: Session, user_id: str, amount: float) -> UserMembership:
@@ -208,10 +294,59 @@ def add_spending(db: Session, user_id: str, amount: float) -> UserMembership:
         um = ensure_user_membership(db, user)
         if um is None:
             return None
+
+    old_level_code = None
+    if um.membership_type:
+        old_level_code = um.membership_type.code
+
     um.total_spending = float(um.total_spending or 0) + float(amount)
+
+    types = get_membership_types(db)
+    spending = float(um.total_spending or 0)
+    new_level = _resolve_current_level(types, spending)
+
+    promoted = (
+        new_level is not None
+        and old_level_code is not None
+        and new_level.code != old_level_code
+    )
+
+    if new_level is not None:
+        um.membership_type_id = new_level.id
+
     db.commit()
     db.refresh(um)
-    return recalc_user_membership(db, um.user)
+
+    user = (
+        db.query(User).filter(User.id == user_id).first()
+    )
+    if user is not None:
+        sync_user_member_type(db, user)
+
+    if promoted and user is not None and new_level is not None:
+        user_voucher = _issue_level_up_reward(db, user, new_level.code)
+        db.commit()
+        if user_voucher is not None:
+            try:
+                from app.services.notification_service import create_notification
+                from app.services.voucher_service import get_voucher
+                v = get_voucher(db, user_voucher.voucher_id)
+                create_notification(
+                    db,
+                    user_id=user.id,
+                    title="🎉 Selamat naik level: {}!".format(new_level.name),
+                    message="Kamu menerima voucher hadiah belanja: {} (min. belanja Rp {:,}).".format(
+                        v.code if v else "",
+                        int(v.min_purchase if v else 0),
+                    ) if v else "Kamu menerima voucher hadiah belanja keanggotaan.",
+                    notification_type="reward",
+                    reference_type="voucher",
+                    reference_id=user_voucher.voucher_id,
+                )
+            except Exception:
+                db.rollback()
+
+    return um
 
 
 def get_membership_view(db: Session, user) -> Optional[dict]:
@@ -221,9 +356,12 @@ def get_membership_view(db: Session, user) -> Optional[dict]:
         return None
 
     spending = float(um.total_spending or 0)
-    current = match_membership_type(types, getattr(user, "member_type", None))
-    if current is None:
-        current = _resolve_current_level(types, spending)
+
+    # Penting: level ditentukan dari total belanja aktual (bukan kolom
+    # statis member_type) supaya status keanggotaan ikut naik setelah
+    # progres terpenuhi.
+    sync_user_member_type(db, user)
+    current = _resolve_current_level(types, spending)
     if current is None:
         return None
 
@@ -261,4 +399,44 @@ def get_membership_view(db: Session, user) -> Optional[dict]:
         "progress_text": progress_text,
         "benefits": benefits,
         "discount_percentage": float(current.discount_percentage or 0),
+        "reward_voucher": _get_reward_voucher(db, user),
+    }
+
+
+def _get_reward_voucher(db: Session, user) -> Optional[dict]:
+    """Kembalikan voucher hadiah yang belum diklaim (dipakai) untuk user."""
+    user_voucher = (
+        db.query(UserVoucher)
+        .filter(
+            UserVoucher.user_id == user.id,
+            UserVoucher.is_claimed.is_(False),
+        )
+        .order_by(UserVoucher.created_at.desc())
+        .first()
+    )
+    if user_voucher is None:
+        return None
+
+    voucher = (
+        db.query(Voucher).filter(Voucher.id == user_voucher.voucher_id).first()
+    )
+    if voucher is None:
+        return None
+
+    def _fmt_discount(value) -> str:
+        try:
+            return format_rupiah(float(value))
+        except (TypeError, ValueError):
+            return "0"
+
+    return {
+        "user_voucher_id": user_voucher.id,
+        "code": voucher.code,
+        "title": voucher.name,
+        "description": voucher.description,
+        "discount_percent": float(voucher.discount_percent or 0),
+        "min_purchase": int(voucher.min_purchase or 0),
+        "min_purchase_label": "Min. belanja {}".format(_fmt_discount(voucher.min_purchase)),
+        "valid_until": voucher.valid_until.isoformat() if voucher.valid_until else None,
+        "is_claimed": user_voucher.is_claimed,
     }

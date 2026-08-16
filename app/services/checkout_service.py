@@ -133,6 +133,21 @@ def checkout(db: Session, user_id: str, data: CheckoutRequest) -> Order:
     if voucher:
         voucher.used_count += 1
         db.add(voucher)
+        # Tandai voucher hadiah keanggotaan milik buyer sebagai sudah dipakai.
+        from app.models.voucher import UserVoucher
+        user_voucher = (
+            db.query(UserVoucher)
+            .filter(
+                UserVoucher.user_id == user_id,
+                UserVoucher.voucher_id == voucher.id,
+                UserVoucher.is_claimed.is_(False),
+            )
+            .first()
+        )
+        if user_voucher is not None:
+            user_voucher.is_claimed = True
+            user_voucher.claimed_at = datetime.utcnow()
+            db.add(user_voucher)
 
     db.commit()
     db.refresh(db_order)

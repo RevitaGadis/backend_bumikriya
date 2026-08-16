@@ -40,6 +40,18 @@ class MeResponse(BaseModel):
     email: EmailStr
     role: str
 
+class RewardVoucherResponse(BaseModel):
+    user_voucher_id: Optional[str] = None
+    code: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    discount_percent: Optional[float] = 0
+    min_purchase: Optional[float] = 0
+    min_purchase_label: Optional[str] = None
+    valid_until: Optional[datetime] = None
+    is_claimed: Optional[bool] = False
+
+
 class MembershipResponse(BaseModel):
     current_level: str
     current_level_code: str
@@ -50,6 +62,7 @@ class MembershipResponse(BaseModel):
     progress_text: str
     benefits: List[str] = []
     discount_percentage: float = 0
+    reward_voucher: Optional[RewardVoucherResponse] = None
 
 class OrderProductResponse(BaseModel):
     id: Optional[str] = None

@@ -40,3 +40,4 @@ class User(Base):
     membership = relationship(
         "UserMembership", back_populates="user", uselist=False
     )
+    vouchers = relationship("UserVoucher", back_populates="user", cascade="all, delete-orphan")
