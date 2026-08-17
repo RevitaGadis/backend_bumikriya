@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.api import deps
 from app.services import product_service, order_service, store_service, voucher_service
 from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductStockUpdate
-from app.schemas.order import OrderStatusUpdate
+from app.schemas.order import Order, OrderStatusUpdate
 from app.schemas.store import Store, StoreUpdate
 from app.schemas.voucher import Voucher
 from app.core.uploads import save_upload, DEFAULT_IMAGE_PATH
@@ -235,7 +235,7 @@ def read_seller_orders(
     return order_service.get_orders_for_seller(db, current_seller.id, skip, limit)
 
 
-@router.put("/orders/{order_id}/status")
+@router.put("/orders/{order_id}/status", response_model=Order)
 def update_seller_order_status(
     order_id: int,
     *,
