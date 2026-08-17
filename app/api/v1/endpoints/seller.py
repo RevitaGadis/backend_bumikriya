@@ -8,7 +8,7 @@ from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductSt
 from app.schemas.order import OrderStatusUpdate
 from app.schemas.store import Store, StoreUpdate
 from app.schemas.voucher import Voucher
-from app.core.uploads import save_upload
+from app.core.uploads import save_upload, DEFAULT_IMAGE_PATH
 from app.models.user import User
 from app.schemas.store import StoreWithRating
 from app.models.store import Store as StoreModel
@@ -125,7 +125,7 @@ def create_seller_product(
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
     """Tambah produk baru. (Seller only)"""
-    image_path = save_upload(image) if image else "/images/products/default.jpg"
+    image_path = save_upload(image) if image else DEFAULT_IMAGE_PATH
     product_in = ProductCreate(
         name=name,
         price=price,

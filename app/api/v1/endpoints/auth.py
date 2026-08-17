@@ -18,6 +18,7 @@ from app.api import deps
 from app.services import user_service
 from app.services.email_service import send_email, get_last_email_error
 from app.schemas.user import UserCreate, UserLogin, ForgotPasswordRequest, VerifyResetCodeRequest, ResetPasswordRequest, MeResponse
+from app.schemas.token import RefreshRequest
 from app.schemas.token import TokenPayload 
 from app.models.user import User
 
@@ -167,10 +168,30 @@ def read_me(current_user: User = Depends(deps.get_current_user)) -> Any:
     }
 
 @router.post("/logout")
-async def logout(response: Response, current_user: User = Depends(deps.get_current_user), redis_client: Redis = Depends(deps.get_redis_client)) -> Any:
+async def logout(
+    request: Request,
+    response: Response,
+    redis_client: Redis = Depends(deps.get_redis_client),
+) -> Any:
+    """Logout tanpa menuntut access token valid (token mungkin sudah kedaluwarsa).
+
+    Identifikasi user lewat refresh token (masih berlaku lebih lama), lalu hapus
+    data refresh token di Redis dan bersihkan cookie.
+    """
+    user_id = None
+    refresh_token = request.cookies.get("refresh_token")
+    if refresh_token:
+        try:
+            payload = decode_token(refresh_token)
+            if payload and payload.sub:
+                user_id = payload.sub
+        except JWTError:
+            user_id = None
+
+    if user_id:
+        redis_client.delete(f"refresh_token:{user_id}")
     response.delete_cookie(key="access_token")
     response.delete_cookie(key="refresh_token")
-    redis_client.delete(f"refresh_token:{current_user.id}")
     return {"message": "Logout successful"}
 
 @router.post("/register")
@@ -363,10 +384,11 @@ async def resend_verification_email(
 async def refresh_access_token(
     request: Request,
     response: Response,
+    body: RefreshRequest,
     db: Session = Depends(deps.get_db),
     redis_client: Redis = Depends(deps.get_redis_client)
 ) -> Any:
-    refresh_token = request.cookies.get("refresh_token")
+    refresh_token = body.refresh_token or request.cookies.get("refresh_token")
     if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

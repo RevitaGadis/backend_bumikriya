@@ -6,9 +6,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi.staticfiles import StaticFiles
-
 from app.core.config import settings
+from app.core.static_files import FallbackStaticFiles
 from app.api.v1.endpoints import auth, checkout, category, admin, home, seller, user, product, order, wishlist, cart, notification, payment, stores, voucher, review, recipe
 
 logger = logging.getLogger("uvicorn.error")
@@ -42,7 +41,8 @@ async def value_error_handler(request: Request, exc: ValueError):
     return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+app.mount("/uploads", FallbackStaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+app.mount("/images", FallbackStaticFiles(directory=settings.UPLOAD_DIR), name="images")
 
 app.add_middleware(
     SessionMiddleware,
