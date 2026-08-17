@@ -120,5 +120,5 @@ def search_all(db: Session, q: str) -> dict:
     return {
         "recipes": recipes,
         "products": products,
-        "stores": [StoreSearchResult(store_name=s.store_name, logo=s.logo, average_rating=0.0) for s in stores],
+        "stores": [StoreSearchResult(id=str(s.id), store_name=s.store_name, logo=s.logo, average_rating=0.0) for s in stores],
     }
