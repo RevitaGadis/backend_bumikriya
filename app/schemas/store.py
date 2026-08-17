@@ -167,3 +167,10 @@ class StoreReviewListResponse(BaseModel):
 class StoreWithRating(StoreInDBBase):
     average_rating: float = 0.0
     review_count: int = 0
+
+
+class StoreSearchResult(BaseModel):
+    id: str
+    store_name: str
+    logo: Optional[str] = None
+    average_rating: float = 0.0
