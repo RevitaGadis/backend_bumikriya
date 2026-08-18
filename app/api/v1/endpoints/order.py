@@ -19,10 +19,6 @@ def read_orders(
     user_id: Optional[str] = None,
     current_user: User = Depends(deps.get_current_admin_or_seller),
 ) -> Any:
-    """
-    Retrieve orders with their items and payment. (Admin or seller only)
-    Optional `user_id` query param to filter by customer.
-    """
     return order_service.get_orders(db, skip=skip, limit=limit, user_id=user_id)
 
 
@@ -33,7 +29,6 @@ def read_my_orders(
     limit: int = 100,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
-    """List order milik user yang sedang login. (Buyer)"""
     return order_service.get_orders(db, skip=skip, limit=limit, user_id=current_user.id)
 
 
@@ -43,10 +38,9 @@ def read_my_order(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
-    """Detail order milik sendiri. (Buyer)"""
     order = order_service.get_order(db, order_id=order_id)
     if not order or order.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=404, detail="Order tidak ditemukan")
     return order
 
 
@@ -56,14 +50,11 @@ def read_order(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_admin_or_seller),
 ) -> Any:
-    """
-    Retrieve a single order detail including items and payment. (Admin or seller only)
-    """
     order = order_service.get_order(db, order_id=order_id)
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order tidak ditemukan",
         )
     return order
 
@@ -74,15 +65,11 @@ def read_order_detail(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_admin_or_seller),
 ) -> Any:
-    """
-    Retrieve a full order detail including status, customer, items, payment,
-    shipping and status history. (Admin or seller only)
-    """
     order_detail = order_service.get_order_detail(db, order_id=order_id)
     if not order_detail:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order tidak ditemukan",
         )
     return {"success": True, "data": order_detail}
 
@@ -94,13 +81,10 @@ def update_order(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_admin_or_seller),
 ) -> Any:
-    """
-    Update an order (e.g. status or shipping address). (Admin or seller only)
-    """
     order = order_service.update_order(db, order_id=order_id, order=order_in)
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order tidak ditemukan",
         )
     return order

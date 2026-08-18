@@ -151,7 +151,7 @@ async def login_for_access_token(
     if not user or not verify_password(user_in.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Salah email atau password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return _login_response(response, user, redis_client)
@@ -185,7 +185,7 @@ async def register_user(
     if user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The user with this username already exists in the system.",
+            detail="Pengguna dengan email ini sudah ada di sistem.",
         )
 
     token = secrets.token_urlsafe(32)
@@ -403,7 +403,7 @@ async def refresh_access_token(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            detail="Pengguna tidak ditemukan",
         )
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

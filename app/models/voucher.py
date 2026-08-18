@@ -1,14 +1,14 @@
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text, func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text, func, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base, generate_uuid
 
 
 class UserVoucher(Base):
-    """Penautan voucher hadiah (reward keanggotaan) ke pengguna tertentu."""
-
     __tablename__ = "user_vouchers"
-
+    __table_args__ = (
+        UniqueConstraint("user_id", "level_code", name="uq_user_vouchers_user_level"),
+    )
     id = Column(String(36), primary_key=True, index=True, default=generate_uuid)
     user_id = Column(
         String(36),

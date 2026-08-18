@@ -15,9 +15,6 @@ from app.models.store import Store as StoreModel
 
 router = APIRouter()
 
-
-# ---------- Register jadi seller ----------
-
 @router.post("/register", response_model=Store, status_code=status.HTTP_201_CREATED)
 def register_as_seller(
     *,
@@ -28,7 +25,6 @@ def register_as_seller(
     logo: Optional[UploadFile] = File(None),
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
-    """Upgrade akun jadi seller + bikin toko. (User biasa yang login)"""
     logo_path = None
     if logo and logo.filename:
         logo_path = save_upload(logo, subdir="stores")
@@ -42,10 +38,9 @@ def read_my_store(
     db: Session = Depends(deps.get_db),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """Lihat data toko sendiri. (Seller only)"""
     store = store_service.get_store_by_user(db, current_seller.id)
     if not store:
-        raise HTTPException(status_code=404, detail="Store not found")
+        raise HTTPException(status_code=404, detail="Toko tidak ditemukan")
     return store
 
 
@@ -67,7 +62,6 @@ def update_my_store(
     banner: Optional[UploadFile] = File(None),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """Update data toko sendiri. (Seller only)"""
     store_in = StoreUpdate(
         store_name=store_name,
         tagline=tagline,
@@ -91,11 +85,8 @@ def update_my_store(
 
     store = store_service.update_store(db, current_seller.id, store_in)
     if not store:
-        raise HTTPException(status_code=404, detail="Store not found")
+        raise HTTPException(status_code=404, detail="Toko tidak ditemukan")
     return store
-
-
-# ---------- Produk ----------
 
 @router.get("/products", response_model=List[Product])
 def read_seller_products(
@@ -104,7 +95,6 @@ def read_seller_products(
     limit: int = 100,
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """List produk milik seller yang login. (Seller only)"""
     return product_service.get_products_by_seller(db, current_seller.id, skip, limit)
 
 
@@ -124,7 +114,6 @@ def create_seller_product(
     image: Optional[UploadFile] = File(None),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """Tambah produk baru. (Seller only)"""
     image_path = save_upload(image) if image else "/images/products/default.jpg"
     product_in = ProductCreate(
         name=name,
@@ -158,7 +147,6 @@ async def update_seller_product(
     is_active: Optional[bool] = Form(None),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """Update produk milik sendiri. (Seller only)"""
     update_data: dict = {}
     if name is not None:
         update_data["name"] = name
@@ -189,7 +177,7 @@ async def update_seller_product(
     product_in = ProductUpdate(**update_data)
     product = product_service.update_seller_product(db, product_id, current_seller.id, product_in)
     if not product:
-        raise HTTPException(status_code=404, detail="Product not found or not owned by you")
+        raise HTTPException(status_code=404, detail="Produk tidak ditemukan atau bukan milik Anda")
     return product
 
 
@@ -200,11 +188,10 @@ def delete_seller_product(
     db: Session = Depends(deps.get_db),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """Hapus produk milik sendiri. (Seller only)"""
     deleted = product_service.delete_seller_product(db, product_id, current_seller.id)
     if not deleted:
-        raise HTTPException(status_code=404, detail="Product not found or not owned by you")
-    return {"message": "Product deleted successfully"}
+        raise HTTPException(status_code=404, detail="Produk tidak ditemukan atau bukan milik Anda")
+    return {"message": "Produk berhasil dihapus"}
 
 
 @router.put("/products/{product_id}/stock", response_model=Product)
@@ -215,14 +202,10 @@ def update_seller_product_stock(
     stock_in: ProductStockUpdate,
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """Update stok produk milik sendiri. (Seller only)"""
     product = product_service.update_seller_product_stock(db, product_id, current_seller.id, stock_in.stock)
     if not product:
-        raise HTTPException(status_code=404, detail="Product not found or not owned by you")
+        raise HTTPException(status_code=404, detail="Produk tidak ditemukan atau bukan milik Anda")
     return product
-
-
-# ---------- Orders ----------
 
 @router.get("/orders")
 def read_seller_orders(
@@ -231,7 +214,6 @@ def read_seller_orders(
     limit: int = 100,
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """List order yang mengandung produk milik seller ini. (Seller only)"""
     return order_service.get_orders_for_seller(db, current_seller.id, skip, limit)
 
 
@@ -243,14 +225,11 @@ def update_seller_order_status(
     status_in: OrderStatusUpdate,
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """Update status order (hanya yang ada produk milik seller ini). (Seller only)"""
     order = order_service.update_seller_order_status(db, order_id, current_seller.id, status_in.status)
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found or does not contain your products")
+        raise HTTPException(status_code=404, detail="Order tidak ditemukan atau tidak mengandung produk Anda")
     return order
 
-
-# ---------- Vouchers ----------
 
 @router.get("/vouchers", response_model=List[Voucher])
 def read_seller_vouchers(
@@ -260,29 +239,24 @@ def read_seller_vouchers(
     is_active: Optional[bool] = None,
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """List voucher yang dibuat oleh seller yang login. (Seller only)"""
     return voucher_service.get_vouchers_by_creator(
         db, current_seller.id, skip, limit, is_active
     )
 
-
-# ---------- Dashboard ----------
 
 @router.get("/dashboard/summary")
 def seller_dashboard_summary(
     db: Session = Depends(deps.get_db),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    """Ringkasan performa toko. (Seller only)"""
     return order_service.get_seller_dashboard_summary(db, current_seller.id)
 
 
 @router.get("/store/{store_id}", response_model=StoreWithRating)
 def read_store_public(store_id: str, db: Session = Depends(deps.get_db)) -> Any:
-    """Lihat profil toko + rating rata-rata. (Public)"""
     store = db.query(StoreModel).filter(StoreModel.id == store_id).first()
     if not store:
-        raise HTTPException(status_code=404, detail="Store not found")
+        raise HTTPException(status_code=404, detail="Toko tidak ditemukan")
     rating = store_service.get_store_rating_summary(db, store.user_id)
     return StoreWithRating(
         id=store.id, user_id=store.user_id, store_name=store.store_name,

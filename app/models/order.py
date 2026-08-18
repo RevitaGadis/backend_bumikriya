@@ -19,6 +19,12 @@ class Order(Base):
     shipping_address = Column(Text, nullable=False)
     voucher_id = Column(String(36), ForeignKey("vouchers.id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
     user = relationship("User", back_populates="orders")
     voucher = relationship("Voucher", back_populates="orders", uselist=False, lazy="selectin")

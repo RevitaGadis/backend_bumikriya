@@ -40,7 +40,7 @@ def add_to_wishlist(
     if not item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found",
+            detail="Produk tidak ditemukan",
         )
     return item
 
@@ -59,6 +59,6 @@ def remove_from_wishlist(
     if not removed:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Wishlist item not found",
+            detail="Item di wishlist tidak ditemukan",
         )
-    return {"message": "Wishlist item removed"}
+    return {"message": "Item di wishlist dihapus"}

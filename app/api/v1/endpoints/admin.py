@@ -38,9 +38,6 @@ def read_all_vouchers(
     created_by: Optional[str] = None,
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Retrieve all vouchers. (Admin only)
-    """
     return voucher_service.get_vouchers(
         db, skip=skip, limit=limit, is_active=is_active, created_by=created_by
     )
@@ -66,9 +63,6 @@ def read_customers(
     search: Optional[str] = None,
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Retrieve customers list with statistics, top customer and pagination. (Admin only)
-    """
     data = customer_service.get_customers(
         db, page=page, limit=limit, search=search
     )
@@ -80,9 +74,6 @@ def read_customer_detail(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Retrieve customer details/profile by customer_id. (Admin only)
-    """
     detail = customer_service.get_customer_detail(db, customer_id=customer_id)
     if not detail:
         raise HTTPException(
@@ -102,9 +93,6 @@ async def update_customer_data(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Update customer details/profile by customer_id. (Admin only)
-    """
     content_type = request.headers.get("content-type", "")
     data = {}
     if "multipart/form-data" in content_type:
@@ -155,7 +143,7 @@ async def update_customer_data(
     if not data.get("name") or not data.get("email"):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Name and email are required fields",
+            detail="Nama dan email wajib diisi",
         )
 
     updated = customer_service.update_customer(
@@ -180,9 +168,6 @@ def read_customer_order_history(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Retrieve customer order history. (Admin only)
-    """
     customer = db.query(User).filter(User.id == customer_id, User.role.has(name="user")).first()
     if not customer:
         raise HTTPException(
@@ -206,9 +191,6 @@ def read_admin_order_detail(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Retrieve order details for admin. (Admin only)
-    """
     order_detail = customer_service.get_admin_order_detail(db, order_id=order_id)
     if not order_detail:
         raise HTTPException(
@@ -225,9 +207,6 @@ def read_accounts_summary(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Retrieve account statistics (total, verified, role & status distribution). (Admin only)
-    """
     return {
         "success": True,
         "data": account_service.get_account_summary(db)
@@ -241,15 +220,12 @@ def read_accounts(
     search: Optional[str] = None,
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Retrieve accounts list (admin & seller) with pagination. (Admin only)
-    """
     data = account_service.get_accounts(
         db, page=page, limit=limit, search=search
     )
     return {
         "success": True,
-        "message": "Accounts retrieved successfully",
+        "message": "Akun berhasil diambil",
         "data": data,
     }
 
@@ -259,18 +235,15 @@ def read_account_detail(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Retrieve account detail by account_id. (Admin only)
-    """
     account = account_service.get_account_detail(db, account_id=account_id)
     if not account:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account not found",
+            detail="Akun tidak ditemukan",
         )
     return {
         "success": True,
-        "message": "Account retrieved successfully",
+        "message": "Akun berhasil diambil",
         "data": account,
     }
 
@@ -284,9 +257,6 @@ async def create_account(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Create a new account with optional avatar. (Admin only)
-    """
     if len(password) < 8 or len(password) > 72:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -314,7 +284,7 @@ async def create_account(
     )
     return {
         "success": True,
-        "message": "Account created successfully",
+        "message": "Akun berhasil dibuat",
         "data": account,
     }
 
@@ -330,9 +300,6 @@ async def update_account(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Update account data with optional avatar change/removal. (Admin only)
-    """
     data = {}
     if name is not None:
         data["name"] = name
@@ -357,11 +324,11 @@ async def update_account(
     if not account:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account not found",
+            detail="Akun tidak ditemukan",
         )
     return {
         "success": True,
-        "message": "Account updated successfully",
+        "message": "Akun berhasil diperbarui",
         "data": account,
     }
 
@@ -372,9 +339,6 @@ def update_account_status(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """
-    Activate / deactivate an account. (Admin only)
-    """
     try:
         account = account_service.update_account_status(
             db, account_id=account_id, status_value=body.status
@@ -387,10 +351,10 @@ def update_account_status(
     if not account:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account not found",
+            detail="Akun tidak ditemukan",
         )
     return {
         "success": True,
-        "message": "Account updated successfully",
+        "message": "Akun berhasil diperbarui",
         "data": account,
     }

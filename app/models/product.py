@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Float, Integer, String, Text, ForeignKey
+from sqlalchemy import Boolean, Column, Float, Integer, String, Text, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from app.db.base import Base, generate_uuid
 
@@ -18,6 +18,13 @@ class Product(Base):
     seller_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     category_id = Column(String(36), ForeignKey("categories.id"), nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
     category = relationship("Category", back_populates="products")
     seller = relationship("User")

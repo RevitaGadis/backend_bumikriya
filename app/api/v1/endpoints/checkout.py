@@ -18,5 +18,4 @@ def checkout(
     checkout_in: CheckoutRequest,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
-    """Proses isi cart jadi order baru. (Buyer)"""
     return checkout_service.checkout(db, current_user.id, checkout_in)

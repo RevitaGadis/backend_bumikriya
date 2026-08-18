@@ -10,11 +10,11 @@ class Address(Base):
     id = Column(String(36), primary_key=True, index=True, default=generate_uuid)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
 
-    label = Column(String(50), nullable=False, default="Rumah")  # mis. "Rumah", "Kantor", "Kos"
+    label = Column(String(50), nullable=False, default="Rumah")
     recipient_name = Column(String(255), nullable=False)
     phone = Column(String(20), nullable=False)
 
-    address_line = Column(String(500), nullable=False)   # nama jalan, no rumah, RT/RW, patokan
+    address_line = Column(String(500), nullable=False)
     kelurahan = Column(String(100), nullable=True)
     kecamatan = Column(String(100), nullable=True)
     kota = Column(String(100), nullable=False)

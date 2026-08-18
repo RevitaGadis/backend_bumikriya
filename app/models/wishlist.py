@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, func
+from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -6,7 +6,9 @@ from app.db.base import Base
 
 class Wishlist(Base):
     __tablename__ = "wishlists"
-
+    __table_args__ = (
+        UniqueConstraint("user_id", "product_id", name="uq_wishlists_user_product"),
+    ) 
     id = Column(BigInteger, primary_key=True, autoincrement=True, index=True)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     product_id = Column(String(36), ForeignKey("products.id"), nullable=False, index=True)

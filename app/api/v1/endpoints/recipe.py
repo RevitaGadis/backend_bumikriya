@@ -18,13 +18,11 @@ def read_recipes(
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
-    """List/search recipe berdasarkan title. (Public)"""
     return recipe_service.get_recipes(db, search, skip, limit)
 
 
 @router.get("/{recipe_id}", response_model=RecipeDetail)
 def read_recipe(recipe_id: str, db: Session = Depends(deps.get_db)) -> Any:
-    """Detail recipe + rekomendasi produk per bahan. (Public)"""
     recipe = recipe_service.get_recipe(db, recipe_id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe tidak ditemukan")
@@ -56,7 +54,6 @@ def create_recipe(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """Bikin recipe baru. (Admin only)"""
     recipe = recipe_service.create_recipe(db, data)
     return read_recipe(recipe.id, db)
 
@@ -68,7 +65,6 @@ def update_recipe(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """Update recipe. (Admin only)"""
     recipe = recipe_service.update_recipe(db, recipe_id, data)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe tidak ditemukan")
@@ -81,26 +77,7 @@ def delete_recipe(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin),
 ) -> Any:
-    """Hapus recipe. (Admin only)"""
     deleted = recipe_service.delete_recipe(db, recipe_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Recipe tidak ditemukan")
-    return {"message": "Recipe deleted"}
-
-
-class StoreSearchResult(BaseModel):
-    id: str
-    store_name: str
-    logo: Optional[str] = None
-    average_rating: float = 0.0
-
-class SearchAllResponse(BaseModel):
-    products: List[ProductBrief]
-    recipes: List[RecipeSummary]
-    stores: List[StoreSearchResult]
-
-
-@router.get("/search/all", response_model=SearchAllResponse)
-def search_everything(q: str, db: Session = Depends(deps.get_db)) -> Any:
-    """Search bar utama — produk, recipe, dan toko sekaligus. (Public)"""
-    return recipe_service.search_all(db, q)
+    return {"message": "Recipe dihapus berhasil"}

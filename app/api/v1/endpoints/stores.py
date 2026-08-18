@@ -22,7 +22,7 @@ def _get_store_or_404(db: Session, store_id: str) -> Any:
     if not store:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Store not found",
+            detail="Toko tidak ditemukan",
         )
     return store
 
@@ -33,7 +33,6 @@ def read_store_detail(
     db: Session = Depends(deps.get_db),
     current_user: Optional[User] = Depends(deps.get_current_user_optional),
 ) -> Any:
-    """Detail toko. Public, is_following otomatis false kalau belum login."""
     store = _get_store_or_404(db, store_id)
     return store_service.build_store_detail(db, store, current_user)
 
@@ -46,7 +45,6 @@ def read_store_products(
     db: Session = Depends(deps.get_db),
     current_user: Optional[User] = Depends(deps.get_current_user_optional),
 ) -> Any:
-    """Produk toko (active) dengan pagination. Public."""
     store = _get_store_or_404(db, store_id)
     page = max(page, 1)
     limit = min(max(limit, 1), 100)
@@ -74,7 +72,6 @@ def read_store_reviews(
     limit: int = 20,
     db: Session = Depends(deps.get_db),
 ) -> Any:
-    """Review toko. Public. (Belum ada tabel review, response kosong.)"""
     _get_store_or_404(db, store_id)
     page = max(page, 1)
     limit = min(max(limit, 1), 100)
@@ -96,14 +93,13 @@ def follow_store(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
-    """Follow toko. (Login required)"""
     ok = store_service.follow_store(db, current_user.id, store_id)
     if not ok:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Store not found",
+            detail="Toko tidak ditemukan",
         )
-    return {"message": "Store followed", "is_following": True}
+    return {"message": "Toko diikuti", "is_following": True}
 
 
 @router.delete("/{store_id}/follow")
@@ -112,11 +108,10 @@ def unfollow_store(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
-    """Unfollow toko. (Login required)"""
     ok = store_service.unfollow_store(db, current_user.id, store_id)
     if not ok:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Store not found",
+            detail="Toko tidak ditemukan",
         )
-    return {"message": "Store unfollowed", "is_following": False}
+    return {"message": "Toko tidak diikuti lagi", "is_following": False}

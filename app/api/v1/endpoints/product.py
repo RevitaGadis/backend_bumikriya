@@ -20,9 +20,6 @@ def read_products(
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
-    """
-    Retrieve products. (Public)
-    """
     products = product_service.get_products(db, skip=skip, limit=limit)
     return products
 
@@ -31,14 +28,11 @@ def read_product(
     product_id: str,
     db: Session = Depends(deps.get_db),
 ) -> Any:
-    """
-    Retrieve a single product with full detail (public).
-    """
     product = product_service.get_product(db, product_id=product_id)
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found",
+            detail="Produk tidak ditemukan",
         )
 
     images = [
@@ -127,14 +121,11 @@ def create_product(
     image: Optional[UploadFile] = File(None),
     current_user: User = Depends(deps.get_current_admin_or_seller)
 ) -> Any:
-    """
-    Create a new product with image upload. (Admin or seller only)
-    """
     existing = product_service.get_product_by_name(db, name=name)
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A product with this name already exists.",
+            detail="Produk dengan nama ini sudah ada.",
         )
 
     image_path = save_upload(image) if image else "/images/products/default.jpg"
@@ -166,14 +157,11 @@ def update_product(
     image: Optional[UploadFile] = File(None),
     current_user: User = Depends(deps.get_current_admin_or_seller)
 ) -> Any:
-    """
-    Update a product with optional image upload. (Admin or seller only)
-    """
     product = product_service.get_product(db, product_id=product_id)
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found",
+            detail="Produk tidak ditemukan",
         )
 
     data = {}
@@ -201,13 +189,10 @@ def delete_product(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_admin_or_seller)
 ) -> Any:
-    """
-    Delete a product. (Admin or seller only)
-    """
     deleted = product_service.delete_product(db, product_id=product_id)
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found",
+            detail="Produk tidak ditemukan",
         )
-    return {"message": "Product deleted successfully"}
+    return {"message": "Produk berhasil dihapus"}

@@ -17,9 +17,6 @@ def read_categories(
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
-    """
-    Retrieve categories. (Public)
-    """
     categories = category_service.get_categories(db, skip=skip, limit=limit)
     return categories
 
@@ -33,14 +30,12 @@ def create_category(
     image: Optional[UploadFile] = File(None),
     current_admin: User = Depends(deps.get_current_admin)
 ) -> Any:
-    """
-    Create a new category with image upload. (Admin only)
-    """
+
     existing = category_service.get_category_by_name(db, name=name)
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A category with this name already exists.",
+            detail="Kategori dengan nama ini sudah ada.",
         )
     image_path = save_upload(image, subdir="categories") if image else None
     category_in = CategoryCreate(
@@ -57,14 +52,11 @@ def read_category(
     category_id: str,
     db: Session = Depends(deps.get_db),
 ) -> Any:
-    """
-    Retrieve a single category. (Public)
-    """
     category = category_service.get_category(db, category_id=category_id)
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found",
+            detail="Kategori tidak ditemukan",
         )
     return category
 
@@ -79,21 +71,18 @@ def update_category(
     image: Optional[UploadFile] = File(None),
     current_admin: User = Depends(deps.get_current_admin)
 ) -> Any:
-    """
-    Update a category with optional image upload. (Admin only)
-    """
     category = category_service.get_category(db, category_id=category_id)
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found",
+            detail="Kategori tidak ditemukan",
         )
     if name and name != category.name:
         existing = category_service.get_category_by_name(db, name=name)
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="A category with this name already exists.",
+                detail="Kategori dengan nama ini sudah ada.",
             )
     image_path = save_upload(image, subdir="categories") if image else None
     category_in = CategoryUpdate(
@@ -112,20 +101,17 @@ def delete_category(
     db: Session = Depends(deps.get_db),
     current_admin: User = Depends(deps.get_current_admin)
 ) -> Any:
-    """
-    Delete a category. (Admin only)
-    """
     category = category_service.get_category(db, category_id=category_id)
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found",
+            detail="Kategori tidak ditemukan",
         )
     try:
         category_service.delete_category(db, category_id=category_id)
     except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Category cannot be deleted because it is used by existing transactions.",
+            detail="Kategori tidak dapat dihapus karena masih digunakan oleh produk yang ada.",
         )
-    return {"message": "Category deleted successfully"}
+    return {"message": "Kategori berhasil dihapus"}
