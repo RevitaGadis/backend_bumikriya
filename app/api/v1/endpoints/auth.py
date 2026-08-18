@@ -488,14 +488,69 @@ async def forgot_password(
 
     email_sent = send_email(
         to_email=user.email,
-        subject="Kode Verifikasi Reset Password",
+        subject="Verifikasi Reset Password - BumiKriya",
         body_html=(
-            "<p>Halo <strong>%s</strong>,</p>"
-            "<p>Kode verifikasi untuk mereset password Anda adalah:</p>"
-            "<h2 style='letter-spacing:4px'>%s</h2>"
-            "<p>Kode ini berlaku selama %s menit. Jangan bagikan kode ini kepada siapa pun.</p>"
-        ) % (user.name, code, settings.RESET_CODE_EXPIRE_MINUTES),
-        body_text=f"Kode verifikasi reset password Anda: {code} (berlaku {settings.RESET_CODE_EXPIRE_MINUTES} menit)",
+            "<div style='background-color:#f4f6f0;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;'>"
+            "<div style='max-width:520px;margin:0 auto;background-color:#ffffff;border-radius:16px;"
+            "overflow:hidden;border:1px solid #e6e9e1;'>"
+
+            "<div style='text-align:center;padding:28px 24px 8px 24px;'>"
+            "<img src='%s/uploads/logo.png' alt='BumiKriya' width='120' "
+            "style='display:block;margin:0 auto;max-height:56px;' />"
+            "<h1 style='font-size:22px;color:#2f5d3a;margin:12px 0 0 0;font-weight:800;"
+            "letter-spacing:1px;'>BUMIKRIYA</h1>"
+            "</div>"
+
+            "<div style='text-align:center;padding:8px 24px 20px 24px;'>"
+            "<h2 style='font-size:17px;color:#2f5d3a;margin:8px 0 0 0;'>Verifikasi Reset Password</h2>"
+            "<p style='font-size:14px;color:#555555;line-height:1.6;margin:14px 0 0 0;'>"
+            "Halo <strong>%s</strong>,</p>"
+            "<p style='font-size:14px;color:#555555;line-height:1.6;margin:6px 0 0 0;'>"
+            "Kami menerima permintaan untuk mengatur ulang password akun Anda.</p>"
+            "</div>"
+
+            "<div style='text-align:center;padding:0 24px;'>"
+            "<p style='font-size:12px;color:#888888;text-transform:uppercase;letter-spacing:2px;"
+            "margin:0 0 8px 0;'>Kode Verifikasi Anda</p>"
+            "<div style='display:inline-block;background:#f0f5ee;border:2px dashed #2f5d3a;"
+            "border-radius:10px;padding:14px 28px;'>"
+            "<span style='font-size:34px;font-weight:800;color:#2f5d3a;letter-spacing:8px;'>%s</span>"
+            "</div>"
+            "<p style='font-size:13px;color:#777777;margin:14px 0 0 0;'>"
+            "&#9200; Kode ini berlaku selama <strong>%s menit</strong>.</p>"
+            "<p style='font-size:13px;color:#a0583c;margin:8px 0 0 0;'>"
+            "&#9888; Jangan bagikan kode ini kepada siapa pun, termasuk pihak BumiKriya.</p>"
+            "</div>"
+
+            "<div style='text-align:center;padding:22px 24px;'>"
+            "<a href='%s' style='display:inline-block;background:#2f5d3a;color:#ffffff;"
+            "text-decoration:none;font-size:14px;font-weight:700;padding:12px 28px;border-radius:8px;'>"
+            "Kembali ke BumiKriya</a>"
+            "</div>"
+
+            "<div style='background:#f7f9f4;padding:18px 24px;text-align:center;'>"
+            "<p style='font-size:12px;color:#999999;line-height:1.6;margin:0 0 6px 0;'>"
+            "Jika Anda tidak meminta reset password, abaikan email ini.</p>"
+            "<p style='font-size:12px;color:#888888;margin:0;'>&copy; 2026 BumiKriya</p>"
+            "</div>"
+            "</div></div>"
+        ) % (
+            settings.BASE_URL,
+            user.name,
+            code,
+            settings.RESET_CODE_EXPIRE_MINUTES,
+            settings.FRONTEND_URL,
+        ),
+        body_text=(
+            f"BUMIKRIYA\n"
+            f"Verifikasi Reset Password\n\n"
+            f"Halo {user.name},\n"
+            f"Kode verifikasi untuk mereset password Anda adalah: {code}\n"
+            f"Kode ini berlaku selama {settings.RESET_CODE_EXPIRE_MINUTES} menit.\n"
+            f"Jangan bagikan kode ini kepada siapa pun.\n"
+            f"Jika Anda tidak meminta reset password, abaikan email ini.\n"
+            f"\u00a9 2026 BumiKriya"
+        ),
     )
     if not email_sent:
         email_error = get_last_email_error()
