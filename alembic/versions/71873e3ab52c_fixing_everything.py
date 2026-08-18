@@ -17,6 +17,11 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _column_exists(table_name: str, column_name: str) -> bool:
+    inspector = sa.inspect(op.get_bind())
+    return any(column["name"] == column_name for column in inspector.get_columns(table_name))
+
+
 def upgrade() -> None:
     """Upgrade schema."""
 
@@ -50,10 +55,11 @@ def upgrade() -> None:
         ),
     )
 
-    op.drop_column(
-        "products",
-        "is_featured",
-    )
+    if _column_exists("products", "is_featured"):
+        op.drop_column(
+            "products",
+            "is_featured",
+        )
 
     op.alter_column(
         "reviews",
@@ -174,16 +180,17 @@ def downgrade() -> None:
         type_=sa.VARCHAR(length=36),
         existing_nullable=False,
     )
-    op.add_column(
-        "products",
-        sa.Column(
-            "is_featured",
-            sa.BOOLEAN(),
-            server_default=sa.text("false"),
-            autoincrement=False,
-            nullable=False,
-        ),
-    )
+    if not _column_exists("products", "is_featured"):
+        op.add_column(
+            "products",
+            sa.Column(
+                "is_featured",
+                sa.BOOLEAN(),
+                server_default=sa.text("false"),
+                autoincrement=False,
+                nullable=False,
+            ),
+        )
 
     op.drop_column(
         "products",
