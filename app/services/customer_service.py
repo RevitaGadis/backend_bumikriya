@@ -16,7 +16,7 @@ def _membership_display(db: Session, total_spent: float, member_type=None) -> st
         matched = membership_service.match_membership_type(types, member_type)
         if matched:
             return matched.name
-    current = membership_service._resolve_current_level(types, total_spent)
+    current = membership_service.resolve_current_level(types, total_spent)
     return current.name if current else "Bronze Member"
 
 def _initial_for(name: str) -> str:
@@ -185,7 +185,7 @@ def get_customer_detail(db: Session, customer_id: str) -> Optional[dict]:
     total_orders = len(active_orders)
     average_order_value = total_spent / total_orders if total_orders > 0 else 0.0
 
-    membership_name = _membership_display(total_spent, user.member_type)
+    membership_name = _membership_display(db, total_spent, user.member_type)
     if not membership_name.lower().endswith("member"):
         membership_display_name = f"{membership_name} Member"
     else:

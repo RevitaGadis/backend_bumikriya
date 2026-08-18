@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api import deps
 from app.services import product_service
 from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductDetail
-from app.core.uploads import save_upload
+from app.core.uploads import save_upload, DEFAULT_IMAGE_PATH
 from app.models.user import User
 from app.models.store import Store
 from app.services import review_service
@@ -128,7 +128,7 @@ def create_product(
             detail="Produk dengan nama ini sudah ada.",
         )
 
-    image_path = save_upload(image) if image else "/images/products/default.jpg"
+    image_path = save_upload(image) if image else DEFAULT_IMAGE_PATH
     product_in = ProductCreate(
         name=name,
         price=price,

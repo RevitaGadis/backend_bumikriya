@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 from app.api import deps
 from app.services import product_service, order_service, store_service, voucher_service
 from app.schemas.product import Product, ProductCreate, ProductUpdate, ProductStockUpdate
-from app.schemas.order import OrderStatusUpdate
+from app.schemas.order import Order, OrderStatusUpdate
 from app.schemas.store import Store, StoreUpdate
 from app.schemas.voucher import Voucher
-from app.core.uploads import save_upload
+from app.core.uploads import save_upload, DEFAULT_IMAGE_PATH
 from app.models.user import User
 from app.schemas.store import StoreWithRating
 from app.models.store import Store as StoreModel
@@ -114,7 +114,7 @@ def create_seller_product(
     image: Optional[UploadFile] = File(None),
     current_seller: User = Depends(deps.get_current_seller),
 ) -> Any:
-    image_path = save_upload(image) if image else "/images/products/default.jpg"
+    image_path = save_upload(image) if image else DEFAULT_IMAGE_PATH
     product_in = ProductCreate(
         name=name,
         price=price,
@@ -217,7 +217,7 @@ def read_seller_orders(
     return order_service.get_orders_for_seller(db, current_seller.id, skip, limit)
 
 
-@router.put("/orders/{order_id}/status")
+@router.put("/orders/{order_id}/status", response_model=Order)
 def update_seller_order_status(
     order_id: int,
     *,

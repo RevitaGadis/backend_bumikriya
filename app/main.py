@@ -6,10 +6,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi.staticfiles import StaticFiles
-
 from app.core.config import settings
-from app.api.v1.endpoints import auth, checkout, category, admin, search, seller, user, product, order, wishlist, cart, notification,payment, stores, voucher, review, recipe, search
+from app.core.static_files import FallbackStaticFiles
+from app.api.v1.endpoints import auth, checkout, category, admin, home, seller, user, product, order, wishlist, cart, notification, payment, stores, voucher, review, recipe
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -42,7 +41,8 @@ async def value_error_handler(request: Request, exc: ValueError):
     return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+app.mount("/uploads", FallbackStaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+app.mount("/images", FallbackStaticFiles(directory=settings.UPLOAD_DIR), name="images")
 
 app.add_middleware(
     SessionMiddleware,
@@ -65,7 +65,7 @@ app.add_middleware(
 
 app.include_router(auth.router,        prefix="/api/v1/auth",        tags=["Auth"])
 app.include_router(checkout.router,    prefix="/api/v1/checkout",    tags=["Checkout"])
-app.include_router(search.router,        prefix="/api/v1/home",        tags=["Home"])
+app.include_router(home.router,        prefix="/api/v1/home",        tags=["Home"])
 app.include_router(category.router,    prefix="/api/v1/categories",  tags=["Categories"])
 app.include_router(seller.router,      prefix="/api/v1/seller",      tags=["Seller"])
 app.include_router(user.router,        prefix="/api/v1/user",        tags=["User"])
@@ -81,7 +81,6 @@ app.include_router(payment.router, prefix="/payments", tags=["Payments"])
 app.include_router(voucher.router,    prefix="/api/v1/vouchers",   tags=["Vouchers"])
 app.include_router(review.router, prefix="/api/v1", tags=["Reviews"])
 app.include_router(recipe.router, prefix="/recipes", tags=["Recipes"])
-app.include_router(search.router, prefix="/search", tags=["Search"])
 
 @app.get("/")
 async def root():

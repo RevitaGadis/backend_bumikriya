@@ -8,6 +8,8 @@ from app.core.config import settings
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 
+DEFAULT_IMAGE_PATH = "/images/products/default.png"
+
 def save_upload(file: UploadFile, subdir: str = "products") -> str:
     ext = Path(file.filename or "").suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
