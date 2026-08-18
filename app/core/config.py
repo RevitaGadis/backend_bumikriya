@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET")
     GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI")
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://three-bug-coder.vercel.app")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://bumi-kriya.vercel.app")
 
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
     MAX_UPLOAD_SIZE: int = int(os.getenv("MAX_UPLOAD_SIZE", 5 * 1024 * 1024))
