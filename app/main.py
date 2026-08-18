@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from app.core.config import settings
 from app.core.static_files import FallbackStaticFiles
-from app.api.v1.endpoints import auth, checkout, category, admin, home, seller, user, product, order, wishlist, cart, notification, payment, stores, voucher, review, recipe
+from app.api.v1.endpoints import auth, checkout, category, admin, search, seller, user, product, order, wishlist, cart, notification, payment, stores, voucher, review, recipe
 
 logger = logging.getLogger("uvicorn.error")
 
