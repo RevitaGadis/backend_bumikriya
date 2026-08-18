@@ -100,25 +100,3 @@ def delete_recipe(db: Session, recipe_id: str) -> bool:
     db.delete(db_recipe)
     db.commit()
     return True
-
-
-def search_all(db: Session, q: str) -> dict:
-    from app.models.product import Product
-    from app.models.store import Store
-    from app.schemas.recipe import RecipeSummary, ProductBrief
-    from app.schemas.store import StoreSearchResult
-
-    # Search recipes
-    recipes = db.query(Recipe).filter(Recipe.title.ilike(f"%{q}%")).limit(10).all()
-
-    # Search products
-    products = db.query(Product).filter(Product.name.ilike(f"%{q}%")).limit(10).all()
-
-    # Search stores
-    stores = db.query(Store).filter(Store.store_name.ilike(f"%{q}%")).limit(10).all()
-
-    return {
-        "recipes": recipes,
-        "products": products,
-        "stores": [StoreSearchResult(id=str(s.id), store_name=s.store_name, logo=s.logo, average_rating=0.0) for s in stores],
-    }

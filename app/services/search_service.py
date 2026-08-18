@@ -3,37 +3,18 @@ from sqlalchemy.orm import Session
 from app.models.product import Product
 from app.models.recipe import Recipe
 from app.models.store import Store
-from app.services import store_service
+from app.schemas.store import StoreSearchResult
 
 
-def search_all(db: Session, keyword: str, limit: int = 10) -> dict:
-    products = (
-        db.query(Product)
-        .filter(Product.is_active.is_(True), Product.name.ilike(f"%{keyword}%"))
-        .limit(limit)
-        .all()
-    )
-    recipes = (
-        db.query(Recipe)
-        .filter(Recipe.title.ilike(f"%{keyword}%"))
-        .limit(limit)
-        .all()
-    )
-    stores = (
-        db.query(Store)
-        .filter(Store.is_approved.is_(True), Store.store_name.ilike(f"%{keyword}%"))
-        .limit(limit)
-        .all()
-    )
+def search_all(db: Session, q: str) -> dict:
+    recipes = db.query(Recipe).filter(Recipe.title.ilike(f"%{q}%")).limit(10).all()
 
-    stores_out = []
-    for store in stores:
-        rating = store_service.get_store_rating_summary(db, store.user_id)
-        stores_out.append({
-            "id": store.id,
-            "store_name": store.store_name,
-            "logo": store.logo,
-            "average_rating": rating["average_rating"],
-        })
+    products = db.query(Product).filter(Product.name.ilike(f"%{q}%")).limit(10).all()
 
-    return {"products": products, "recipes": recipes, "stores": stores_out}
+    stores = db.query(Store).filter(Store.store_name.ilike(f"%{q}%")).limit(10).all()
+
+    return {
+        "recipes": recipes,
+        "products": products,
+        "stores": [StoreSearchResult(id=str(s.id), store_name=s.store_name, logo=s.logo, average_rating=0.0) for s in stores],
+    }
